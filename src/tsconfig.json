@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+      "module": "ES2022",
+      "noImplicitAny": true,
+      "outDir": "../dist",
+      "preserveConstEnums": true,
+      "removeComments": true,
+      "sourceMap": true,
+      "strict": true,
+    },
+    "files": [
+        "index.ts"
+    ]
+}
