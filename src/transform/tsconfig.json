@@ -17,6 +17,7 @@
         "allowJs": true
     },
     "files": [
-        "transform.mjs"
+        "transform.mjs",
+        "transformLogic.ts"
     ]
 }
