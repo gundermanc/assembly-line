@@ -3,18 +3,26 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "npm run quickbuild && copy package.json ..\\dist && cd ..\\dist && npm install --only=production",
+    "quickbuild": "npm run buildtransform && tsc -p tsconfig.json",
+    "buildtransform": "tsc -p transform\\tsconfig.json",
     "lint": "eslint --ext .ts **/*.ts",
     "run": "npm run build && node ../dist/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "quickrun": "npm run quickbuild && node ../dist/index.js"
   },
   "keywords": [],
   "author": "Christian Gunderman",
   "license": "MIT",
   "devDependencies": {
+    "@types/node": "^20.5.7",
     "@typescript-eslint/eslint-plugin": "^6.5.0",
     "eslint": "^8.48.0",
     "typescript": "^5.2.2"
+  },
+  "dependencies": {
+    "assemblyscript": "^0.27.9",
+    "fs": "^0.0.1-security"
   }
 }
