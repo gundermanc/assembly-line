@@ -9,8 +9,8 @@ import binaryen from "binaryen";
 import { TransformLogic } from "./transformLogic.js";
 
 class MyTransform extends Transform {
-  afterCompile(asModule) {
-    new TransformLogic().afterCompile(asModule);
+  afterInitialize(asModule) {
+    new TransformLogic("out.cs").afterInitialize(asModule);
   }
 }
 
