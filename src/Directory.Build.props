@@ -1,0 +1,17 @@
+<Project>
+    <PropertyGroup>
+        <Nullable>enable</Nullable>
+
+        <!-- Output paths -->
+        <BaseOutputPath>$(RepoRoot)bin\$(MSBuildProjectName)\</BaseOutputPath>
+        <OutputPath>$(BaseOutputPath)$(Configuration)\</OutputPath>
+        <BaseIntermediateOutputPath>$(RepoRoot)obj\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
+        <IntermediateOutputPath>$(BaseIntermediateOutputPath)$(Configuration)\</IntermediateOutputPath>
+
+        <!-- Assembly metadata -->
+        <Company>Christian Gunderman</Company>
+        <Copyright>© Christian Gunderman. All rights reserved.</Copyright>
+        <Title>Assembly Line</Title>
+        <Product>Experimental transpiler project.</Product>
+    </PropertyGroup>
+</Project>
