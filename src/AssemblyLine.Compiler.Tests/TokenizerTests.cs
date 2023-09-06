@@ -1,4 +1,3 @@
-using System.IO;
 using Xunit;
 
 namespace AssemblyLine.Compiler.Tests;
@@ -8,7 +7,7 @@ public class TokenizerTests
     [Fact]
     public void Tokenizer_Empty()
     {
-        var tokenizer = new Tokenizer(CreateStreamFromString(string.Empty));
+        var tokenizer = new Tokenizer(string.Empty.ToStream());
 
         Assert.Null(tokenizer.PeekNext());
         Assert.Null(tokenizer.GetNext());
@@ -20,7 +19,7 @@ public class TokenizerTests
     [Fact]
     public void Tokenizer_SimpleReturnValue_WithWhitespace()
     {
-        var tokenizer = new Tokenizer(CreateStreamFromString("return 3 + 4;"));
+        var tokenizer = new Tokenizer("return 3 + 4;".ToStream());
 
         Assert.Equal(TokenType.ReturnKeyword, tokenizer.PeekNext()?.Type);
         Assert.Null(tokenizer.PeekNext()?.As<object>().Value);
@@ -43,7 +42,7 @@ public class TokenizerTests
     //[Fact]
     public void Tokenizer_SimpleReturnValue_WithoutWhitespace()
     {
-        var tokenizer = new Tokenizer(CreateStreamFromString("return 3+4;"));
+        var tokenizer = new Tokenizer("return 3+4;".ToStream());
 
         Assert.Equal(TokenType.ReturnKeyword, tokenizer.PeekNext()?.Type);
         Assert.Null(tokenizer.PeekNext()?.As<object>().Value);
@@ -60,18 +59,5 @@ public class TokenizerTests
         Assert.Equal(TokenType.IntegerLiteral, tokenizer.PeekNext()?.Type);
         Assert.Equal(4, tokenizer.PeekNext()?.As<int>().Value);
         Assert.Equal(TokenType.IntegerLiteral, tokenizer.GetNext()?.Type);
-    }
-
-    private static Stream CreateStreamFromString(string value)
-    {
-        var memoryStream = new MemoryStream();
-        
-        var writer = new StreamWriter(memoryStream);
-        writer.Write(value);
-        writer.Flush();
-
-        memoryStream.Position = 0;
-
-        return memoryStream;
     }
 }

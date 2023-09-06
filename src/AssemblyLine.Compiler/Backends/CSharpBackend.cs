@@ -15,6 +15,7 @@ public sealed class CSharpBackend : BackendBase
 
     public override void EndVisit()
     {
+        this.streamWriter.Flush();
     }
 
     public override void StartVisit()
