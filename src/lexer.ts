@@ -1,4 +1,7 @@
 export enum LexemeType {
+    Identifier,
+    LeftParen,
+    RightParen,
     String
 }
 
@@ -25,7 +28,7 @@ export class StringEnumerator {
             return undefined;
         }
 
-        const c = this.enumeratorString.charAt(this.index);
+        const c = this.current();
         this.index++;
         return c;
     }
@@ -37,13 +40,19 @@ export class StringEnumerator {
             this.enumeratorString.charAt(nextIndex);
     }
 
+    current(): string | undefined {
+        return this.index < this.enumeratorString.length ?
+            this.enumeratorString.charAt(this.index) :
+            undefined;
+    }
+
     startSegment(): void {
         this.segmentStart = this.index;
     }
 
     endSegment(): string {
         if (this.segmentStart < 0 ||
-            this.segmentStart >= this.enumeratorString.length) {
+            this.segmentStart > this.enumeratorString.length) {
             throw new Error('Not in segment');
         }
 
@@ -55,23 +64,62 @@ export class StringEnumerator {
 }
 
 export function* lexCode(enumerator: StringEnumerator): IterableIterator<Lexeme | LexError> {
-    while (true) {
-        const c = enumerator.next();
-        switch (c) {
-            case '"':
-                yield lexString(enumerator);
+    let c = undefined;
 
+    while (true) {
+        c = enumerator.current();
+        switch (c) {
+            case '(':
+                yield { type: LexemeType.LeftParen, text: undefined };
+                c = enumerator.next();
+                break;
+            case ')':
+                yield { type: LexemeType.RightParen, text: undefined };
+                c = enumerator.next();
+                break;
+            case '"':
+                let str = lexString(enumerator);
+                if (str) {
+                    yield str;
+                }
+                break;
             case undefined:
                 return;
+            default:
+                if (isAlphaNumeric(c)) {
+                    let id = lexIdentifier(enumerator);
+                    if (id) {
+                        yield id;
+                    }
+                } else {
+                    c = enumerator.next();
+                }
+                break;
         }
     }
 }
 
-function lexString(enumerator: StringEnumerator): Lexeme | LexError {
-    if (enumerator.peek() != '"') {
-        return LexError.ExpectedClosingQuote;
+function lexIdentifier(enumerator: StringEnumerator): Lexeme | LexError | undefined {
+    enumerator.startSegment();
+
+    while (true) {
+        let c = enumerator.current();
+        if (c && isAlphaNumeric(c)) {
+            enumerator.next();
+        } else {
+            break;
+        }
     }
 
+    const segment = enumerator.endSegment();
+
+    return segment.length > 0 ?
+        { type: LexemeType.Identifier, text: segment.substring(0, segment.length) } :
+        undefined;
+}
+
+function lexString(enumerator: StringEnumerator): Lexeme | LexError | undefined {
+    enumerator.next();
     enumerator.startSegment();
 
     while (true) {
@@ -83,5 +131,24 @@ function lexString(enumerator: StringEnumerator): Lexeme | LexError {
         }
     }
 
-    return { type: LexemeType.String, text: enumerator.endSegment() };
+    const segment = enumerator.endSegment();
+
+    return segment.length > 0 ?
+        { type: LexemeType.String, text: segment.substring(0, segment.length - 1) } :
+        undefined;
+}
+
+function isAlphaNumeric(str: string): boolean {
+    var code, i, len;
+
+    for (i = 0, len = str.length; i < len; i++) {
+        code = str.charCodeAt(i);
+        if (!(code > 47 && code < 58) && // numeric (0-9)
+            !(code > 64 && code < 91) && // upper alpha (A-Z)
+            !(code > 96 && code < 123)) { // lower alpha (a-z)
+            return false;
+        }
+    }
+
+    return true;
 }

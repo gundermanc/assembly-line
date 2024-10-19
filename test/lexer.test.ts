@@ -64,7 +64,7 @@ describe('String enumerator tests', () => {
 });
 
 describe('Lexer tests', () => {
-    test('Empty length string', async () => {
+    test('String', async () => {
         const lexemes = lexCode(
             new StringEnumerator(
                 `
@@ -74,6 +74,21 @@ describe('Lexer tests', () => {
         const lexemesArray = Array.from(lexemes);
 
         expect(lexemesArray.length).toBe(1);
-        expect(lexemesArray[0]).toBe({ type: LexemeType.String, text: "Hello world" });
+        expect(lexemesArray[0]).toStrictEqual({ type: LexemeType.String, text: "Hello world" });
+    });
+
+    test('Function', async () => {
+        const lexemes = lexCode(
+            new StringEnumerator(
+                `println("Hello world")
+                `));
+
+        const lexemesArray = Array.from(lexemes);
+
+        expect(lexemesArray.length).toBe(4);
+        expect(lexemesArray[0]).toStrictEqual({ type: LexemeType.Identifier, text: "println" });
+        expect(lexemesArray[1]).toStrictEqual({ type: LexemeType.LeftParen, text: undefined });
+        expect(lexemesArray[2]).toStrictEqual({ type: LexemeType.String, text: "Hello world" });
+        expect(lexemesArray[3]).toStrictEqual({ type: LexemeType.RightParen, text: undefined });
     });
 });
