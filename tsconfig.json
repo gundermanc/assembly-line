@@ -1,7 +1,8 @@
 {
     "compilerOptions": {
         "baseUrl": ".",
-        "module": "NodeNext",
+        "module": "CommonJS",
+        "moduleResolution": "node",
         "noImplicitAny": true,
         "outDir": "../dist",
         "paths": {
@@ -13,7 +14,6 @@
         "strict": true,
         "target": "ESNext"
     },
-    "files": [
-        "index.ts"
-    ]
+    "include": ["src/**/*"],
+    "exclude": ["node_modules", "**/*.test.ts"]
 }

@@ -7,17 +7,26 @@
   "scripts": {
     "build": "npm install && tsc -p tsconfig.json",
     "lint": "eslint --ext .ts **/*.ts",
-    "run": "npm run build && node ../dist/index.js"
+    "run": "npm run build && node ../dist/index.js",
+    "test": "npx jest"
   },
   "keywords": [],
   "author": "Christian Gunderman",
   "license": "MIT",
   "devDependencies": {
+    "@babel/core": "^7.25.8",
+    "@babel/generator": "^7.25.7",
+    "@babel/preset-env": "^7.25.8",
+    "@babel/preset-typescript": "^7.25.7",
+    "@types/jest": "^29.5.13",
     "@types/node": "^20.5.7",
+    "@types/yargs-parser": "^21.0.3",
     "@typescript-eslint/eslint-plugin": "^6.5.0",
+    "babel-jest": "^29.7.0",
     "eslint": "^8.48.0",
-    "typescript": "^5.2.2"
-  },
-  "dependencies": {
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.3"
   }
 }
