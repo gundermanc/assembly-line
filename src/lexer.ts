@@ -1,8 +1,9 @@
 export enum LexemeType {
+    Comma,
     Identifier,
     LeftParen,
     RightParen,
-    String
+    String,
 }
 
 export interface Lexeme {
@@ -69,6 +70,10 @@ export function* lexCode(enumerator: StringEnumerator): IterableIterator<Lexeme 
     while (true) {
         c = enumerator.current();
         switch (c) {
+            case ',':
+                yield { type: LexemeType.Comma, text: undefined };
+                c = enumerator.next();
+                break;
             case '(':
                 yield { type: LexemeType.LeftParen, text: undefined };
                 c = enumerator.next();
@@ -126,7 +131,7 @@ function lexString(enumerator: StringEnumerator): Lexeme | LexError | undefined 
         let c = enumerator.next();
         if (!c) {
             return LexError.ExpectedClosingQuote;
-        } else if (c == '"') {
+        } else if (c === '"') {
             break;
         }
     }
