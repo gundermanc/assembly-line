@@ -68,3 +68,55 @@ export class CSharpCodeGenerator extends CodeGeneratorBase {
         this.symbols.defineSymbol(symbol);
     }
 }
+
+export class TypeScriptCodeGenerator extends CodeGeneratorBase {
+
+    public code: string = "";
+
+    constructor(root: AstNode) {
+        super(root);
+
+        this.definePlatformSymbols();
+    }
+
+    protected visitCall(call: CallNode): CodeGeneratorError {
+        const symbol = this.symbols.getSymbol(call.symbol);
+
+        const platformFunction = symbol as PlatformFunctionDefinition;
+        if (!(platformFunction)?.name) {
+            return CodeGeneratorError.UnknownError;
+        }
+
+        const params = call.parameters.map(param => this.nodeToCode(param));
+        const joinedParams = params.join(',');
+
+        this.code += `${(symbol as PlatformFunctionDefinition).platformName}(${joinedParams});\n`;
+
+        return CodeGeneratorError.None;
+    }
+
+    protected unmatchedRule(): CodeGeneratorError {
+        return CodeGeneratorError.UnknownError;
+    }
+
+    private nodeToCode(node: AstNode): string | undefined {
+        switch (node.type) {
+            case NodeType.StringNode:
+                return `"${(node as StringNode).text}"`;
+        }
+
+        return undefined;
+    }
+
+    private definePlatformSymbols() {
+        const symbol: PlatformFunctionDefinition = { 
+            symbolType: SymbolType.PlatformFunction,
+            name: 'log',
+            platformName: 'console.log',
+            parameterTypes: ['string'],
+            returnType: 'void'
+        };
+
+        this.symbols.defineSymbol(symbol);
+    }
+}
