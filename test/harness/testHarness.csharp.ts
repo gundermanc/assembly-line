@@ -2,6 +2,10 @@ import { randomUUID } from 'crypto';
 import * as fs from 'fs/promises';
 import * as child from 'child_process';
 import * as util from 'util';
+import { lexCode, StringEnumerator } from '../../src/lexer';
+import { AstNode, parse } from '../../src/parser';
+import { SymbolTable } from '../../src/symbols';
+import { CSharpCodeGenerator } from '../../src/codeGenerator';
 
 const TestsOutputDir: string = 'test_outputs';
 
@@ -12,9 +16,10 @@ export class CSharpTestHarness {
         const testDirectory = `${TestsOutputDir}/${testId}`;
         await fs.mkdir(testDirectory, { recursive: true });
 
+        // Generate the code.
         // Write the test.
         const testPath = `${testDirectory}/Test.cs`;
-        await fs.writeFile(testPath, code);
+        await fs.writeFile(testPath, this.generateCode(code));
 
         // Copy the boilerplate.
         const projectPath = `${testDirectory}/Test.csproj`;
@@ -30,14 +35,30 @@ export class CSharpTestHarness {
         console.log(childProcess.stdout);
         return childProcess.stdout.trim();
     }
+
+    generateCode(code: string): string {
+        const stringEnumerator = new StringEnumerator(code);
+        const lexemes = lexCode(stringEnumerator); 
+        const tree = parse(lexemes);
+
+        var symbolTable = new SymbolTable();
+
+        // TODO: type check.
+        //const semanticModel = buildSemanticModel(tree as AstNode, symbolTable);
+
+        const generator = new CSharpCodeGenerator(tree as AstNode);
+        generator.visit();
+
+        return generator.code;
+    }
 }
 
 const ProjectFileText = `
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net8.0</TargetFramework>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
 </Project>
 `;

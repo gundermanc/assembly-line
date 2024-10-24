@@ -2,17 +2,43 @@ import { Lexeme, LexemeType, LexError } from "./lexer";
 
 export type ParseResult = AstNode | ParseError | undefined;
 
-export interface AstNode {
+export enum NodeType {
+    CallNode,
+    StringNode,
+};
 
+export abstract class AstNode {
+    public readonly type: NodeType;
+
+    constructor(type: NodeType) {
+        this.type = type;
+    }
 }
 
-export interface CallNode extends AstNode {
-    symbol: string,
-    parameters: AstNode[]
+export function isAstNode(item: unknown): item is AstNode {
+    return (item as AstNode).type !== undefined;
 }
 
-export interface StringNode extends AstNode {
-    text: string
+export class CallNode extends AstNode {
+    symbol: string;
+    parameters: AstNode[];
+
+    constructor(symbol: string, parameters: AstNode[]) {
+        super(NodeType.CallNode);
+
+        this.symbol = symbol;
+        this.parameters = parameters;
+    }
+}
+
+export class StringNode extends AstNode {
+    text: string;
+
+    constructor(text: string) {
+        super(NodeType.StringNode);
+
+        this.text = text;
+    }
 }
 
 export enum ParseError {
@@ -81,8 +107,9 @@ function parseIdentifierExpression(lexemes: LexemeIterator): ParseResult {
 
     // Bail if there are no parameters.
     if (lexemes.next()?.type === LexemeType.RightParen) {
-        const result: AstNode = { symbol: symbolName };
-        return result;
+        return symbolName ?
+            new CallNode(symbolName, []) :
+            ParseError.MalformedFunctionCallExpression;
     }
 
     const parameters = parseParamList(lexemes);
@@ -93,11 +120,9 @@ function parseIdentifierExpression(lexemes: LexemeIterator): ParseResult {
 
     lexemes.next();
 
-    const result: CallNode | ParseError = symbolName && parameters ?
-        { symbol: symbolName, parameters: parameters } :
+    return symbolName && parameters ?
+        new CallNode(symbolName, parameters) :
         ParseError.MalformedFunctionCallExpression;
-
-    return result;
 }
 
 function parseParamList(lexemes: LexemeIterator): AstNode[] | undefined {
@@ -105,7 +130,7 @@ function parseParamList(lexemes: LexemeIterator): AstNode[] | undefined {
 
     while (true) {
         const param = parseExpression(lexemes);
-        if (!param) {
+        if (!isAstNode(param)) {
             // TODO: propagate error up.
             return undefined;
         }
@@ -125,7 +150,8 @@ function parseParamList(lexemes: LexemeIterator): AstNode[] | undefined {
 function parseExpression(lexemes: LexemeIterator): ParseResult {
     switch (lexemes.current()?.type) {
         case LexemeType.String:
-            return { text: lexemes.current()?.text };
+            const text = lexemes.current()?.text;
+            return text ? new StringNode(text) : ParseError.UnrecognizedToken;
     }
 
     return ParseError.ExpectedExpression;
