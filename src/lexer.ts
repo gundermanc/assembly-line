@@ -4,6 +4,8 @@ export enum LexemeType {
     LeftParen,
     RightParen,
     String,
+    Integer,
+    Float
 }
 
 export interface Lexeme {
@@ -91,7 +93,12 @@ export function* lexCode(enumerator: StringEnumerator): IterableIterator<Lexeme 
             case undefined:
                 return;
             default:
-                if (isAlphaNumeric(c)) {
+                if (isNumeric(c)) {
+                    let id = lexNumber(enumerator);
+                    if (id) {
+                        yield id;
+                    }
+                } else if (isAlphaNumeric(c)) {
                     let id = lexIdentifier(enumerator);
                     if (id) {
                         yield id;
@@ -123,6 +130,30 @@ function lexIdentifier(enumerator: StringEnumerator): Lexeme | LexError | undefi
         undefined;
 }
 
+function lexNumber(enumerator: StringEnumerator): Lexeme | LexError | undefined {
+    enumerator.startSegment();
+
+    var isFloat = false;
+
+    while (true) {
+        let c = enumerator.current();
+        if (c && isNumeric(c)) {
+            enumerator.next();
+        } else if (c == '.') {
+            isFloat = true;
+            enumerator.next();
+        } else {
+            break;
+        }
+    }
+
+    const segment = enumerator.endSegment();
+
+    return segment.length > 0 ?
+        {type: isFloat ? LexemeType.Float : LexemeType.Integer, text: segment.substring(0, segment.length) } :
+        undefined;
+}
+
 function lexString(enumerator: StringEnumerator): Lexeme | LexError | undefined {
     enumerator.next();
     enumerator.startSegment();
@@ -151,6 +182,19 @@ function isAlphaNumeric(str: string): boolean {
         if (!(code > 47 && code < 58) && // numeric (0-9)
             !(code > 64 && code < 91) && // upper alpha (A-Z)
             !(code > 96 && code < 123)) { // lower alpha (a-z)
+            return false;
+        }
+    }
+
+    return true;
+}
+
+function isNumeric(str: string): boolean {
+    var code, i, len;
+
+    for (i = 0, len = str.length; i < len; i++) {
+        code = str.charCodeAt(i);
+        if (!(code > 47 && code < 58)) {// numeric (0-9)
             return false;
         }
     }

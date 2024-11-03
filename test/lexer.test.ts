@@ -91,4 +91,24 @@ describe('Lexer tests', () => {
         expect(lexemesArray[2]).toStrictEqual({ type: LexemeType.String, text: "Hello world" });
         expect(lexemesArray[3]).toStrictEqual({ type: LexemeType.RightParen, text: undefined });
     });
+
+    test('Integer', async () => {
+        const lexemes = lexCode(
+            new StringEnumerator(`3`));
+
+        const lexemesArray = Array.from(lexemes);
+
+        expect(lexemesArray.length).toBe(1);
+        expect(lexemesArray[0]).toStrictEqual({ type: LexemeType.Integer, text: "3" });
+    });
+
+    test('Float', async () => {
+        const lexemes = lexCode(
+            new StringEnumerator(`15.7256`));
+
+        const lexemesArray = Array.from(lexemes);
+
+        expect(lexemesArray.length).toBe(1);
+        expect(lexemesArray[0]).toStrictEqual({ type: LexemeType.Float, text: "15.7256" });
+    });
 });
