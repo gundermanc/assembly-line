@@ -87,6 +87,12 @@ class SemanticModelVisitor extends AstVisitor<SemanticModelResult> {
         switch (expressionNode.type) {
             case NodeType.StringNode:
                 return 'string';
+
+            case NodeType.IntegerNode:
+                return 'i32';
+
+            case NodeType.FloatNode:
+                return 'f32';
         }
 
         return undefined;

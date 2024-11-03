@@ -57,7 +57,7 @@ export class FloatNode extends AstNode {
     value: number;
 
     constructor(value: number) {
-        super(NodeType.IntegerNode);
+        super(NodeType.FloatNode);
 
         this.value = value;
     }
