@@ -1,4 +1,4 @@
-import { AstNode, CallNode, NodeType, StringNode } from "./parser";
+import { AstNode, CallNode, FloatNode, IntegerNode, NodeType, StringNode } from "./parser";
 import { AstVisitor } from "./semanticModel";
 import { PlatformFunctionDefinition, SymbolTable, SymbolType } from "./symbols";
 
@@ -51,21 +51,44 @@ export class CSharpCodeGenerator extends CodeGeneratorBase {
         switch (node.type) {
             case NodeType.StringNode:
                 return `"${(node as StringNode).text}"`;
+
+            case NodeType.IntegerNode:
+                return `"${(node as IntegerNode).value}"`;
+
+            case NodeType.FloatNode:
+                return `"${(node as FloatNode).value}"`;
         }
 
         return undefined;
     }
 
     private definePlatformSymbols() {
-        const symbol: PlatformFunctionDefinition = { 
+        const logStringSymbol: PlatformFunctionDefinition = { 
             symbolType: SymbolType.PlatformFunction,
-            name: 'log',
+            name: 'logS',
             platformName: 'System.Console.WriteLine',
             parameterTypes: ['string'],
             returnType: 'void'
         };
+        this.symbols.defineSymbol(logStringSymbol);
 
-        this.symbols.defineSymbol(symbol);
+        const logIntegerSymbol: PlatformFunctionDefinition = { 
+            symbolType: SymbolType.PlatformFunction,
+            name: 'logI',
+            platformName: 'System.Console.WriteLine',
+            parameterTypes: ['i32'],
+            returnType: 'void'
+        };
+        this.symbols.defineSymbol(logIntegerSymbol);
+
+        const logFloatSymbol: PlatformFunctionDefinition = { 
+            symbolType: SymbolType.PlatformFunction,
+            name: 'logF',
+            platformName: 'System.Console.WriteLine',
+            parameterTypes: ['f32'],
+            returnType: 'void'
+        };
+        this.symbols.defineSymbol(logFloatSymbol);
     }
 }
 
@@ -103,21 +126,44 @@ export class TypeScriptCodeGenerator extends CodeGeneratorBase {
         switch (node.type) {
             case NodeType.StringNode:
                 return `"${(node as StringNode).text}"`;
+
+            case NodeType.IntegerNode:
+                return `"${(node as IntegerNode).value}"`;
+
+            case NodeType.FloatNode:
+                return `"${(node as FloatNode).value}"`;
         }
 
         return undefined;
     }
 
     private definePlatformSymbols() {
-        const symbol: PlatformFunctionDefinition = { 
+        const logStringSymbol: PlatformFunctionDefinition = { 
             symbolType: SymbolType.PlatformFunction,
-            name: 'log',
+            name: 'logS',
             platformName: 'console.log',
             parameterTypes: ['string'],
             returnType: 'void'
         };
+        this.symbols.defineSymbol(logStringSymbol);
 
-        this.symbols.defineSymbol(symbol);
+        const logIntegerSymbol: PlatformFunctionDefinition = { 
+            symbolType: SymbolType.PlatformFunction,
+            name: 'logI',
+            platformName: 'console.log',
+            parameterTypes: ['i32'],
+            returnType: 'void'
+        };
+        this.symbols.defineSymbol(logIntegerSymbol);
+
+        const logFloatSymbol: PlatformFunctionDefinition = { 
+            symbolType: SymbolType.PlatformFunction,
+            name: 'logF',
+            platformName: 'console.log',
+            parameterTypes: ['f32'],
+            returnType: 'void'
+        };
+        this.symbols.defineSymbol(logFloatSymbol);
     }
 }
 
@@ -155,20 +201,43 @@ export class PythonCodeGenerator extends CodeGeneratorBase {
         switch (node.type) {
             case NodeType.StringNode:
                 return `"${(node as StringNode).text}"`;
+
+            case NodeType.IntegerNode:
+                return `"${(node as IntegerNode).value}"`;
+
+            case NodeType.FloatNode:
+                return `"${(node as FloatNode).value}"`;
         }
 
         return undefined;
     }
 
     private definePlatformSymbols() {
-        const symbol: PlatformFunctionDefinition = { 
+        const logStringSymbol: PlatformFunctionDefinition = { 
             symbolType: SymbolType.PlatformFunction,
-            name: 'log',
+            name: 'logS',
             platformName: 'print',
             parameterTypes: ['string'],
             returnType: 'void'
         };
+        this.symbols.defineSymbol(logStringSymbol);
 
-        this.symbols.defineSymbol(symbol);
+        const logIntegerSymbol: PlatformFunctionDefinition = { 
+            symbolType: SymbolType.PlatformFunction,
+            name: 'logI',
+            platformName: 'print',
+            parameterTypes: ['i32'],
+            returnType: 'void'
+        };
+        this.symbols.defineSymbol(logIntegerSymbol);
+
+        const logFloatSymbol: PlatformFunctionDefinition = { 
+            symbolType: SymbolType.PlatformFunction,
+            name: 'logF',
+            platformName: 'print',
+            parameterTypes: ['f32'],
+            returnType: 'void'
+        };
+        this.symbols.defineSymbol(logFloatSymbol);
     }
 }
