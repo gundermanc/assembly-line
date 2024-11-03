@@ -5,6 +5,8 @@ export type ParseResult = AstNode | ParseError | undefined;
 export enum NodeType {
     CallNode,
     StringNode,
+    IntegerNode,
+    FloatNode,
 };
 
 export abstract class AstNode {
@@ -38,6 +40,26 @@ export class StringNode extends AstNode {
         super(NodeType.StringNode);
 
         this.text = text;
+    }
+}
+
+export class IntegerNode extends AstNode {
+    value: number;
+
+    constructor(value: number) {
+        super(NodeType.IntegerNode);
+
+        this.value = value;
+    }
+}
+
+export class FloatNode extends AstNode {
+    value: number;
+
+    constructor(value: number) {
+        super(NodeType.IntegerNode);
+
+        this.value = value;
     }
 }
 
@@ -152,6 +174,14 @@ function parseExpression(lexemes: LexemeIterator): ParseResult {
         case LexemeType.String:
             const text = lexemes.current()?.text;
             return text ? new StringNode(text) : ParseError.UnrecognizedToken;
+
+        case LexemeType.Integer:
+            const intValue = lexemes.current()?.text;
+            return intValue ? new IntegerNode(Number(intValue)) : ParseError.UnrecognizedToken;
+
+        case LexemeType.Float:
+            const floatValue = lexemes.current()?.text;
+            return floatValue ? new FloatNode(Number(floatValue)) : ParseError.UnrecognizedToken;
     }
 
     return ParseError.ExpectedExpression;

@@ -1,5 +1,5 @@
 import { lexCode, StringEnumerator } from '../src/lexer';
-import { AstNode, CallNode, parse, StringNode } from '../src/parser';
+import { AstNode, CallNode, FloatNode, IntegerNode, parse, StringNode } from '../src/parser';
 
 describe('Function parsing tests', () => {
     test('No parameter function call', async () => {
@@ -41,5 +41,27 @@ describe('Function parsing tests', () => {
         expect((tree as CallNode).parameters.length).toBe(2);
         expect((((tree as CallNode).parameters[0]) as StringNode).text).toBe('Hello');
         expect((((tree as CallNode).parameters[1]) as StringNode).text).toBe('Goodbye');
+    });
+});
+
+describe('Numeric parsing tests', () => {
+    test('Integer parsing', async () => {
+        const stringEnumerator = new StringEnumerator(`println(3)`);
+        const lexemes = lexCode(stringEnumerator); 
+        const tree = parse(lexemes);
+
+        expect((tree as CallNode).symbol).toBe('println');
+        expect((tree as CallNode).parameters.length).toBe(1);
+        expect((((tree as CallNode).parameters[0]) as IntegerNode).value).toBe(3);
+    });
+
+    test('Integer parsing', async () => {
+        const stringEnumerator = new StringEnumerator(`println(1234.567)`);
+        const lexemes = lexCode(stringEnumerator); 
+        const tree = parse(lexemes);
+
+        expect((tree as CallNode).symbol).toBe('println');
+        expect((tree as CallNode).parameters.length).toBe(1);
+        expect((((tree as CallNode).parameters[0]) as FloatNode).value).toBe(1234.567);
     });
 });
