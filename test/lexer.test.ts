@@ -112,6 +112,16 @@ describe('Lexer tests', () => {
         expect(lexemesArray[0]).toStrictEqual({ type: LexemeType.Float, text: "15.7256" });
     });
 
+    test('Float without preceding digit', async () => {
+        const lexemes = lexCode(
+            new StringEnumerator(`.25`));
+
+        const lexemesArray = Array.from(lexemes);
+
+        expect(lexemesArray.length).toBe(1);
+        expect(lexemesArray[0]).toStrictEqual({ type: LexemeType.Float, text: ".25" });
+    });
+
     test('Operators', async () => {
         // Addition
         const additionLexemes = lexCode(

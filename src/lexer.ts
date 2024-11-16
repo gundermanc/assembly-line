@@ -99,6 +99,15 @@ export function* lexCode(enumerator: StringEnumerator): IterableIterator<Lexeme 
                 yield { type: LexemeType.Operator, text: '-' };
                 c = enumerator.next();
                 break;
+            case '.':
+                const nextChar = enumerator.peek();
+                if (nextChar && isNumeric(nextChar)) {
+                    let id = lexNumber(enumerator);
+                    if (id) {
+                        yield id;
+                    }
+                }
+                break;
             case undefined:
                 return;
             default:

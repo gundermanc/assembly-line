@@ -28,15 +28,27 @@ describe('Demos compiling to and running as TypeScript', () => {
         expect(result).toEqual(colorizedNumber(1234));
     }, TIMEOUT_MS);
 
-    test('Addition function calls', async () => {
+    test('Addition integer function calls', async () => {
         const result = await harness.evaluateCode(`logI(1 + 2 + 3);`);
         expect(isStringObject(result));
         expect(result.trim()).toEqual(colorizedNumber(6));
     }, TIMEOUT_MS);
 
-    test('Subtraction function calls', async () => {
+    test('Addition float function calls', async () => {
+        const result = await harness.evaluateCode(`logI(3.5 + 4.5);`);
+        expect(isStringObject(result));
+        expect(result.trim()).toEqual(colorizedNumber(8));
+    }, TIMEOUT_MS);
+
+    test('Subtraction integer function calls', async () => {
         const result = await harness.evaluateCode(`logI(1 - 2 - 3);`);
         expect(isStringObject(result));
         expect(result.trim()).toEqual(colorizedNumber(-4));
+    }, TIMEOUT_MS);
+
+    test('Subtraction float function calls', async () => {
+        const result = await harness.evaluateCode(`logI(0.5 - .25);`);
+        expect(isStringObject(result));
+        expect(result.trim()).toEqual(colorizedNumber(0.25));
     }, TIMEOUT_MS);
 });
