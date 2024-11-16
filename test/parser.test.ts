@@ -79,8 +79,21 @@ describe('Operator parsing tests', () => {
         expect((operator.right as IntegerNode).value).toBe(10);
     });
 
-    test('Multiple add parsing', async () => {
-        const stringEnumerator = new StringEnumerator(`println(5 + 10 + 12)`);
+    test('Single subtract parsing', async () => {
+        const stringEnumerator = new StringEnumerator(`println(5 - 10)`);
+        const lexemes = lexCode(stringEnumerator); 
+        const tree = parse(lexemes);
+
+        expect((tree as CallNode).symbol).toBe('println');
+        expect((tree as CallNode).parameters.length).toBe(1);
+        const operator = (((tree as CallNode).parameters[0]) as BinaryOperationNode);
+        expect(operator.operation).toBe(Operation.Subtract);
+        expect((operator.left as IntegerNode).value).toBe(5);
+        expect((operator.right as IntegerNode).value).toBe(10);
+    });
+
+    test('Multiple add and subtract parsing', async () => {
+        const stringEnumerator = new StringEnumerator(`println(5 + 10 - 12)`);
         const lexemes = lexCode(stringEnumerator); 
         const tree = parse(lexemes);
 
@@ -90,7 +103,7 @@ describe('Operator parsing tests', () => {
         expect(operator.operation).toBe(Operation.Add);
         expect((operator.left as IntegerNode).value).toBe(5);
         const right = (operator.right as BinaryOperationNode);
-        expect(right.operation).toBe(Operation.Add);
+        expect(right.operation).toBe(Operation.Subtract);
         expect((right.left as IntegerNode).value).toBe(10);
         expect((right.right as IntegerNode).value).toBe(12);
     });

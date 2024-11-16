@@ -12,6 +12,7 @@ export enum NodeType {
 
 export enum Operation {
     Add,
+    Subtract
 }
 
 export abstract class AstNode {
@@ -202,8 +203,11 @@ function tryParseOperatorExpression(lexemes: LexemeIterator): ParseResult | unde
     let operation: Operation | undefined = undefined;
     if (operator?.type == LexemeType.Operator) {
         switch (operator.text) {
-            case "+":
+            case '+':
                 operation = Operation.Add;
+                break;
+            case '-':
+                operation = Operation.Subtract;
                 break;
         }
     }
@@ -222,7 +226,7 @@ function tryParseOperatorExpression(lexemes: LexemeIterator): ParseResult | unde
             return right;
         }
 
-        return new BinaryOperationNode(Operation.Add, left, right)
+        return new BinaryOperationNode(operation, left, right)
     }
 
     // Not applicable.

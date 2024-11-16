@@ -113,14 +113,22 @@ describe('Lexer tests', () => {
     });
 
     test('Operators', async () => {
-        const lexemes = lexCode(
+        // Addition
+        const additionLexemes = lexCode(
             new StringEnumerator(`1 + 2`));
+        const additionLexemesArray = Array.from(additionLexemes);
+        expect(additionLexemesArray.length).toBe(3);
+        expect(additionLexemesArray[0]).toStrictEqual({ type: LexemeType.Integer, text: "1" });
+        expect(additionLexemesArray[1]).toStrictEqual({ type: LexemeType.Operator, text: "+" });
+        expect(additionLexemesArray[2]).toStrictEqual({ type: LexemeType.Integer, text: "2" });
 
-        const lexemesArray = Array.from(lexemes);
-
-        expect(lexemesArray.length).toBe(3);
-        expect(lexemesArray[0]).toStrictEqual({ type: LexemeType.Integer, text: "1" });
-        expect(lexemesArray[1]).toStrictEqual({ type: LexemeType.Operator, text: "+" });
-        expect(lexemesArray[2]).toStrictEqual({ type: LexemeType.Integer, text: "2" });
+        // Subtraction
+        const subtractionLexemes = lexCode(
+            new StringEnumerator(`1 - 2`));
+        const subtractionLexemesArray = Array.from(subtractionLexemes);
+        expect(subtractionLexemesArray.length).toBe(3);
+        expect(subtractionLexemesArray[0]).toStrictEqual({ type: LexemeType.Integer, text: "1" });
+        expect(subtractionLexemesArray[1]).toStrictEqual({ type: LexemeType.Operator, text: "-" });
+        expect(subtractionLexemesArray[2]).toStrictEqual({ type: LexemeType.Integer, text: "2" });
     });
 });
