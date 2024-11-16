@@ -63,8 +63,7 @@ describe('Numeric parsing tests', () => {
         expect((tree as CallNode).symbol).toBe('println');
         expect((tree as CallNode).parameters.length).toBe(1);
         expect((((tree as CallNode).parameters[0]) as FloatNode).value).toBe(1234.567);
-    });
-});
+    })});
 
 describe('Operator parsing tests', () => {
     test('Single add parsing', async () => {

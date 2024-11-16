@@ -1,4 +1,4 @@
-import { AstNode, CallNode, FloatNode, IntegerNode, NodeType, StringNode } from "./parser";
+import { AstNode, BinaryOperationNode, CallNode, FloatNode, IntegerNode, isAstNode, NodeType, Operation, StringNode } from "./parser";
 import { AstVisitor } from "./semanticModel";
 import { PlatformFunctionDefinition, SymbolTable, SymbolType } from "./symbols";
 
@@ -14,6 +14,45 @@ abstract class CodeGeneratorBase extends AstVisitor<CodeGeneratorError> {
         super(root);
 
         this.symbols = new SymbolTable();
+    }
+
+    protected nodeToCode(node: AstNode): string | undefined {
+        switch (node.type) {
+            case NodeType.StringNode:
+                return `"${(node as StringNode).text}"`;
+
+            case NodeType.IntegerNode:
+                return `${(node as IntegerNode).value}`;
+
+            case NodeType.FloatNode:
+                return `${(node as FloatNode).value}`;
+
+            case NodeType.BinaryOperation:
+                return this.operatorNodeToCode(node);
+        }
+
+        return undefined;
+    }
+
+    protected operatorNodeToCode(node: AstNode): string | undefined {
+        const operatorNode = node as BinaryOperationNode;
+
+        let operation: string | undefined;
+
+        switch (operatorNode.operation) {
+            case Operation.Add:
+                operation = '+';
+                break;
+        }
+
+        if (operation && isAstNode(operatorNode.left) && isAstNode(operatorNode.right)) {
+            const left = this.nodeToCode(operatorNode.left);
+            const right = this.nodeToCode(operatorNode.right);
+
+            return `${left} ${operation} ${right}`;
+        }
+
+        return undefined;
     }
 }
 
@@ -45,21 +84,6 @@ export class CSharpCodeGenerator extends CodeGeneratorBase {
 
     protected unmatchedRule(): CodeGeneratorError {
         return CodeGeneratorError.UnknownError;
-    }
-
-    private nodeToCode(node: AstNode): string | undefined {
-        switch (node.type) {
-            case NodeType.StringNode:
-                return `"${(node as StringNode).text}"`;
-
-            case NodeType.IntegerNode:
-                return `"${(node as IntegerNode).value}"`;
-
-            case NodeType.FloatNode:
-                return `"${(node as FloatNode).value}"`;
-        }
-
-        return undefined;
     }
 
     private definePlatformSymbols() {
@@ -122,21 +146,6 @@ export class TypeScriptCodeGenerator extends CodeGeneratorBase {
         return CodeGeneratorError.UnknownError;
     }
 
-    private nodeToCode(node: AstNode): string | undefined {
-        switch (node.type) {
-            case NodeType.StringNode:
-                return `"${(node as StringNode).text}"`;
-
-            case NodeType.IntegerNode:
-                return `"${(node as IntegerNode).value}"`;
-
-            case NodeType.FloatNode:
-                return `"${(node as FloatNode).value}"`;
-        }
-
-        return undefined;
-    }
-
     private definePlatformSymbols() {
         const logStringSymbol: PlatformFunctionDefinition = { 
             symbolType: SymbolType.PlatformFunction,
@@ -195,21 +204,6 @@ export class PythonCodeGenerator extends CodeGeneratorBase {
 
     protected unmatchedRule(): CodeGeneratorError {
         return CodeGeneratorError.UnknownError;
-    }
-
-    private nodeToCode(node: AstNode): string | undefined {
-        switch (node.type) {
-            case NodeType.StringNode:
-                return `"${(node as StringNode).text}"`;
-
-            case NodeType.IntegerNode:
-                return `"${(node as IntegerNode).value}"`;
-
-            case NodeType.FloatNode:
-                return `"${(node as FloatNode).value}"`;
-        }
-
-        return undefined;
     }
 
     private definePlatformSymbols() {
