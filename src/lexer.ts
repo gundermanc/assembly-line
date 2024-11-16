@@ -6,7 +6,7 @@ export enum LexemeType {
     String,
     Integer,
     Float,
-    PlusOperator
+    Operator
 }
 
 export interface Lexeme {
@@ -92,7 +92,7 @@ export function* lexCode(enumerator: StringEnumerator): IterableIterator<Lexeme 
                 }
                 break;
             case '+':
-                yield { type: LexemeType.PlusOperator, text: undefined };
+                yield { type: LexemeType.Operator, text: "+" };
                 c = enumerator.next();
                 break;
             case undefined:

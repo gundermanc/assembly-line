@@ -120,7 +120,7 @@ describe('Lexer tests', () => {
 
         expect(lexemesArray.length).toBe(3);
         expect(lexemesArray[0]).toStrictEqual({ type: LexemeType.Integer, text: "1" });
-        expect(lexemesArray[1]).toStrictEqual({ type: LexemeType.PlusOperator, text: undefined });
+        expect(lexemesArray[1]).toStrictEqual({ type: LexemeType.Operator, text: "+" });
         expect(lexemesArray[2]).toStrictEqual({ type: LexemeType.Integer, text: "2" });
     });
 });

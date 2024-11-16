@@ -1,5 +1,5 @@
 import { lexCode, StringEnumerator } from '../src/lexer';
-import { AstNode, CallNode, FloatNode, IntegerNode, parse, StringNode } from '../src/parser';
+import { AstNode, BinaryOperationNode, CallNode, FloatNode, IntegerNode, Operation, parse, StringNode } from '../src/parser';
 
 describe('Function parsing tests', () => {
     test('No parameter function call', async () => {
@@ -63,5 +63,36 @@ describe('Numeric parsing tests', () => {
         expect((tree as CallNode).symbol).toBe('println');
         expect((tree as CallNode).parameters.length).toBe(1);
         expect((((tree as CallNode).parameters[0]) as FloatNode).value).toBe(1234.567);
+    });
+});
+
+describe('Operator parsing tests', () => {
+    test('Single add parsing', async () => {
+        const stringEnumerator = new StringEnumerator(`println(5 + 10)`);
+        const lexemes = lexCode(stringEnumerator); 
+        const tree = parse(lexemes);
+
+        expect((tree as CallNode).symbol).toBe('println');
+        expect((tree as CallNode).parameters.length).toBe(1);
+        const operator = (((tree as CallNode).parameters[0]) as BinaryOperationNode);
+        expect(operator.operation).toBe(Operation.Add);
+        expect((operator.left as IntegerNode).value).toBe(5);
+        expect((operator.right as IntegerNode).value).toBe(10);
+    });
+
+    test('Multiple add parsing', async () => {
+        const stringEnumerator = new StringEnumerator(`println(5 + 10 + 12)`);
+        const lexemes = lexCode(stringEnumerator); 
+        const tree = parse(lexemes);
+
+        expect((tree as CallNode).symbol).toBe('println');
+        expect((tree as CallNode).parameters.length).toBe(1);
+        const operator = (((tree as CallNode).parameters[0]) as BinaryOperationNode);
+        expect(operator.operation).toBe(Operation.Add);
+        expect((operator.left as IntegerNode).value).toBe(5);
+        const right = (operator.right as BinaryOperationNode);
+        expect(right.operation).toBe(Operation.Add);
+        expect((right.left as IntegerNode).value).toBe(10);
+        expect((right.right as IntegerNode).value).toBe(12);
     });
 });

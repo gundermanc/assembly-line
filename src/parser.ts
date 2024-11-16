@@ -7,7 +7,12 @@ export enum NodeType {
     StringNode,
     IntegerNode,
     FloatNode,
+    BinaryOperation
 };
+
+export enum Operation {
+    Add,
+}
 
 export abstract class AstNode {
     public readonly type: NodeType;
@@ -19,6 +24,19 @@ export abstract class AstNode {
 
 export function isAstNode(item: unknown): item is AstNode {
     return (item as AstNode).type !== undefined;
+}
+
+export class BinaryOperationNode extends AstNode {
+    public readonly operation: Operation;
+    public readonly left: ParseResult;
+    public readonly right: ParseResult;
+
+    constructor(operation: Operation, left: AstNode, right: AstNode) {
+        super(NodeType.BinaryOperation);
+        this.operation = operation;
+        this.left = left;
+        this.right = right;
+    }
 }
 
 export class CallNode extends AstNode {
@@ -170,6 +188,48 @@ function parseParamList(lexemes: LexemeIterator): AstNode[] | undefined {
 }
 
 function parseExpression(lexemes: LexemeIterator): ParseResult {
+    const additionOperation = tryParseOperatorExpression(lexemes);
+    if (additionOperation) {
+        return additionOperation;
+    }
+
+    return parseLiteralExpression(lexemes);
+}
+
+function tryParseOperatorExpression(lexemes: LexemeIterator): ParseResult | undefined {
+    const operator = lexemes.peek();
+
+    let operation: Operation | undefined = undefined;
+    if (operator?.type == LexemeType.Operator) {
+        switch (operator.text) {
+            case "+":
+                operation = Operation.Add;
+                break;
+        }
+    }
+
+    if (operation !== undefined) {
+        const left = parseLiteralExpression(lexemes);
+        if (!isAstNode(left)) {
+            return left;
+        }
+
+        lexemes.next();
+        lexemes.next();
+
+        const right = parseExpression(lexemes);
+        if (!isAstNode(right)) {
+            return right;
+        }
+
+        return new BinaryOperationNode(Operation.Add, left, right)
+    }
+
+    // Not applicable.
+    return undefined;
+}
+
+function parseLiteralExpression(lexemes: LexemeIterator): ParseResult {
     switch (lexemes.current()?.type) {
         case LexemeType.String:
             const text = lexemes.current()?.text;
