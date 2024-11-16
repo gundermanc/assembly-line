@@ -68,8 +68,8 @@ describe('Numeric type semantic model tests', () => {
 });
 
 describe('Operator type semantic model tests', () => {
-    test('Matching Add types tests', async () => {
-        const stringEnumerator = new StringEnumerator(`log(3 + 4 + 5)`);
+    test('Matching Add and Subtract types tests', async () => {
+        const stringEnumerator = new StringEnumerator(`log(3 - 4 + 5)`);
         const lexemes = lexCode(stringEnumerator); 
         const tree = parse(lexemes);
 
@@ -81,7 +81,7 @@ describe('Operator type semantic model tests', () => {
     });
 
     test('Mismatching Add types tests', async () => {
-        const stringEnumerator = new StringEnumerator(`log(3 + 4 + 5.3)`);
+        const stringEnumerator = new StringEnumerator(`log(3 - 4 + 5.3)`);
         const lexemes = lexCode(stringEnumerator); 
         const tree = parse(lexemes);
 

@@ -19,4 +19,10 @@ describe('Demos compiling to and running as Python', () => {
         expect(isStringObject(result));
         expect(result.trim()).toEqual('6');
     });
+
+    test('Subtraction function calls', async () => {
+        const result = await harness.evaluateCode(`logI(1 - 2 - 3);`);
+        expect(isStringObject(result));
+        expect(result.trim()).toEqual('-4');
+    });
 });

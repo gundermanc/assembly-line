@@ -43,6 +43,9 @@ abstract class CodeGeneratorBase extends AstVisitor<CodeGeneratorError> {
             case Operation.Add:
                 operation = '+';
                 break;
+            case Operation.Subtract:
+                operation = '-';
+                break;
         }
 
         if (operation && isAstNode(operatorNode.left) && isAstNode(operatorNode.right)) {
