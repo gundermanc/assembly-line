@@ -111,4 +111,16 @@ describe('Lexer tests', () => {
         expect(lexemesArray.length).toBe(1);
         expect(lexemesArray[0]).toStrictEqual({ type: LexemeType.Float, text: "15.7256" });
     });
+
+    test('Operators', async () => {
+        const lexemes = lexCode(
+            new StringEnumerator(`1 + 2`));
+
+        const lexemesArray = Array.from(lexemes);
+
+        expect(lexemesArray.length).toBe(3);
+        expect(lexemesArray[0]).toStrictEqual({ type: LexemeType.Integer, text: "1" });
+        expect(lexemesArray[1]).toStrictEqual({ type: LexemeType.PlusOperator, text: undefined });
+        expect(lexemesArray[2]).toStrictEqual({ type: LexemeType.Integer, text: "2" });
+    });
 });
