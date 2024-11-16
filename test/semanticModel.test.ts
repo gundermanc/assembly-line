@@ -4,7 +4,7 @@ import { buildSemanticModel, SemanticError, SemanticNode } from '../src/semantic
 import { PlatformFunctionDefinition, SymbolTable, SymbolType } from "../src/symbols";
 
 describe('Function call semantic model tests', () => {
-    test.only('No parameter matching function call', async () => {
+    test('No parameter matching function call', async () => {
         const stringEnumerator = new StringEnumerator(`log()`);
         const lexemes = lexCode(stringEnumerator); 
         const tree = parse(lexemes);
@@ -16,7 +16,7 @@ describe('Function call semantic model tests', () => {
         expect((semanticModel as SemanticNode).returnType).toBe('void');
     });
 
-    test.only('No parameter mis-matched count function call', async () => {
+    test('No parameter mis-matched count function call', async () => {
         const stringEnumerator = new StringEnumerator(`log()`);
         const lexemes = lexCode(stringEnumerator); 
         const tree = parse(lexemes);
@@ -28,7 +28,7 @@ describe('Function call semantic model tests', () => {
         expect(semanticModel).toBe(SemanticError.MismatchedParameterCount);
     });
 
-    test.only('Yes parameter matching type function call', async () => {
+    test('Yes parameter matching type function call', async () => {
         const stringEnumerator = new StringEnumerator(`log("Hello")`);
         const lexemes = lexCode(stringEnumerator); 
         const tree = parse(lexemes);
@@ -42,7 +42,7 @@ describe('Function call semantic model tests', () => {
 });
 
 describe('Numeric type semantic model tests', () => {
-    test.only('Integer type tests', async () => {
+    test('Integer type tests', async () => {
         const stringEnumerator = new StringEnumerator(`log(12345)`);
         const lexemes = lexCode(stringEnumerator); 
         const tree = parse(lexemes);
@@ -54,7 +54,7 @@ describe('Numeric type semantic model tests', () => {
         expect((semanticModel as SemanticNode).returnType).toBe('void');
     });
 
-    test.only('Integer type tests', async () => {
+    test('Integer type tests', async () => {
         const stringEnumerator = new StringEnumerator(`log(54321.9876)`);
         const lexemes = lexCode(stringEnumerator); 
         const tree = parse(lexemes);
@@ -64,5 +64,31 @@ describe('Numeric type semantic model tests', () => {
 
         const semanticModel = buildSemanticModel(tree as AstNode, symbolTable);
         expect((semanticModel as SemanticNode).returnType).toBe('void');
+    });
+});
+
+describe('Operator type semantic model tests', () => {
+    test('Matching Add types tests', async () => {
+        const stringEnumerator = new StringEnumerator(`log(3 + 4 + 5)`);
+        const lexemes = lexCode(stringEnumerator); 
+        const tree = parse(lexemes);
+
+        var symbolTable = new SymbolTable();
+        symbolTable.defineSymbol(new PlatformFunctionDefinition('log', 'Console.WriteLine', ['i32'], 'void'))
+
+        const semanticModel = buildSemanticModel(tree as AstNode, symbolTable);
+        expect((semanticModel as SemanticNode).returnType).toBe('void');
+    });
+
+    test('Mismatching Add types tests', async () => {
+        const stringEnumerator = new StringEnumerator(`log(3 + 4 + 5.3)`);
+        const lexemes = lexCode(stringEnumerator); 
+        const tree = parse(lexemes);
+
+        var symbolTable = new SymbolTable();
+        symbolTable.defineSymbol(new PlatformFunctionDefinition('log', 'Console.WriteLine', ['i32'], 'void'))
+
+        const semanticModel = buildSemanticModel(tree as AstNode, symbolTable);
+        expect(semanticModel).toBe(SemanticError.IncompatibleOperands);
     });
 });

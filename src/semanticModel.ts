@@ -1,4 +1,5 @@
-import { AstNode, CallNode, NodeType } from "./parser";
+import { isStringObject } from "util/types";
+import { AstNode, BinaryOperationNode, CallNode, isAstNode, NodeType } from "./parser";
 import { PlatformFunctionDefinition, SymbolTable, SymbolType } from "./symbols";
 
 type SemanticModelResult = SemanticNode | SemanticError;
@@ -12,6 +13,7 @@ export enum SemanticError {
     MismatchedParameterType,
     UnknownFunctionType,
     UnexpectedNodeType,
+    IncompatibleOperands
 }
 
 export function buildSemanticModel(root: AstNode, symbols: SymbolTable): SemanticModelResult {
@@ -71,8 +73,15 @@ class SemanticModelVisitor extends AstVisitor<SemanticModelResult> {
         }
 
         for (let i = 0; i < call.parameters.length; i++) {
-            if (this.getExpressionType(call.parameters[i]) != platformFunction.parameterTypes[i]) {
-                return SemanticError.MismatchedParameterType;
+            const parameterType = this.getExpressionType(call.parameters[i]);
+            if (parameterType != platformFunction.parameterTypes[i]) {
+
+                // Make sure to propagate lower level errors up if the type
+                // check fails due to a subtree check failing rather than just
+                // a param check.
+                return isStringObject(parameterType) ?
+                    SemanticError.MismatchedParameterType :
+                    parameterType;
             }
         }
 
@@ -83,7 +92,7 @@ class SemanticModelVisitor extends AstVisitor<SemanticModelResult> {
         return SemanticError.UnexpectedNodeType;
     }
 
-    private getExpressionType(expressionNode: AstNode): string | undefined {
+    private getExpressionType(expressionNode: AstNode): string | SemanticError {
         switch (expressionNode.type) {
             case NodeType.StringNode:
                 return 'string';
@@ -93,8 +102,22 @@ class SemanticModelVisitor extends AstVisitor<SemanticModelResult> {
 
             case NodeType.FloatNode:
                 return 'f32';
+
+            case NodeType.BinaryOperation:
+                const binaryOperationNode = expressionNode as BinaryOperationNode;
+                if (binaryOperationNode && isAstNode(binaryOperationNode.left) && isAstNode(binaryOperationNode.right)) {
+                    const left = this.getExpressionType(binaryOperationNode.left);
+                    const right = this.getExpressionType(binaryOperationNode.right);
+
+                    if (left != right) {
+                        return SemanticError.IncompatibleOperands;
+                    }
+
+                    return left;
+                }
+                break;
         }
 
-        return undefined;
+        return SemanticError.UnexpectedNodeType;
     }
 }
