@@ -91,4 +91,40 @@ describe('Operator type semantic model tests', () => {
         const semanticModel = buildSemanticModel(tree as AstNode, symbolTable);
         expect(semanticModel).toBe(SemanticError.IncompatibleOperands);
     });
+
+    test('Matching Multiply and Divide types tests', async () => {
+        const stringEnumerator = new StringEnumerator(`log(3 / 4 * 5)`);
+        const lexemes = lexCode(stringEnumerator); 
+        const tree = parse(lexemes);
+
+        var symbolTable = new SymbolTable();
+        symbolTable.defineSymbol(new PlatformFunctionDefinition('log', 'Console.WriteLine', ['i32'], 'void'))
+
+        const semanticModel = buildSemanticModel(tree as AstNode, symbolTable);
+        expect((semanticModel as SemanticNode).returnType).toBe('void');
+    });
+
+    test('Mismatching Multiply types tests', async () => {
+        const stringEnumerator = new StringEnumerator(`log(3.0 * 4)`);
+        const lexemes = lexCode(stringEnumerator); 
+        const tree = parse(lexemes);
+
+        var symbolTable = new SymbolTable();
+        symbolTable.defineSymbol(new PlatformFunctionDefinition('log', 'Console.WriteLine', ['i32'], 'void'))
+
+        const semanticModel = buildSemanticModel(tree as AstNode, symbolTable);
+        expect(semanticModel).toBe(SemanticError.IncompatibleOperands);
+    });
+
+    test('Mismatching Divide types tests', async () => {
+        const stringEnumerator = new StringEnumerator(`log(3.0 * 4)`);
+        const lexemes = lexCode(stringEnumerator); 
+        const tree = parse(lexemes);
+
+        var symbolTable = new SymbolTable();
+        symbolTable.defineSymbol(new PlatformFunctionDefinition('log', 'Console.WriteLine', ['i32'], 'void'))
+
+        const semanticModel = buildSemanticModel(tree as AstNode, symbolTable);
+        expect(semanticModel).toBe(SemanticError.IncompatibleOperands);
+    });
 });
