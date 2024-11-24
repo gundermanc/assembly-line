@@ -140,5 +140,23 @@ describe('Lexer tests', () => {
         expect(subtractionLexemesArray[0]).toStrictEqual({ type: LexemeType.Integer, text: "1" });
         expect(subtractionLexemesArray[1]).toStrictEqual({ type: LexemeType.Operator, text: "-" });
         expect(subtractionLexemesArray[2]).toStrictEqual({ type: LexemeType.Integer, text: "2" });
+
+        // Multiplication
+        const multiplicationLexemes = lexCode(
+            new StringEnumerator(`1 * 2`));
+        const multiplicationLexemesArray = Array.from(multiplicationLexemes);
+        expect(multiplicationLexemesArray.length).toBe(3);
+        expect(multiplicationLexemesArray[0]).toStrictEqual({ type: LexemeType.Integer, text: "1" });
+        expect(multiplicationLexemesArray[1]).toStrictEqual({ type: LexemeType.Operator, text: "*" });
+        expect(multiplicationLexemesArray[2]).toStrictEqual({ type: LexemeType.Integer, text: "2" });
+
+        // Division
+        const divisionLexemes = lexCode(
+            new StringEnumerator(`1 / 2`));
+        const divisionLexemesArray = Array.from(divisionLexemes);
+        expect(divisionLexemesArray.length).toBe(3);
+        expect(divisionLexemesArray[0]).toStrictEqual({ type: LexemeType.Integer, text: "1" });
+        expect(divisionLexemesArray[1]).toStrictEqual({ type: LexemeType.Operator, text: "/" });
+        expect(divisionLexemesArray[2]).toStrictEqual({ type: LexemeType.Integer, text: "2" });
     });
 });

@@ -107,4 +107,36 @@ describe('Operator parsing tests', () => {
         expect((right.left as IntegerNode).value).toBe(10);
         expect((right.right as IntegerNode).value).toBe(12);
     });
+
+    test('Multiplication first parsing', async () => {
+        const stringEnumerator = new StringEnumerator(`println(5 * 10 + 12)`);
+        const lexemes = lexCode(stringEnumerator); 
+        const tree = parse(lexemes);
+
+        expect((tree as CallNode).symbol).toBe('println');
+        expect((tree as CallNode).parameters.length).toBe(1);
+        const operator = (((tree as CallNode).parameters[0]) as BinaryOperationNode);
+        expect(operator.operation).toBe(Operation.Multiply);
+        expect((operator.left as IntegerNode).value).toBe(5);
+        const right = (operator.right as BinaryOperationNode);
+        expect(right.operation).toBe(Operation.Add);
+        expect((right.left as IntegerNode).value).toBe(10);
+        expect((right.right as IntegerNode).value).toBe(12);
+    });
+
+    test('Multiplication second parsing', async () => {
+        const stringEnumerator = new StringEnumerator(`println(12 + 5 * 10)`);
+        const lexemes = lexCode(stringEnumerator); 
+        const tree = parse(lexemes);
+
+        expect((tree as CallNode).symbol).toBe('println');
+        expect((tree as CallNode).parameters.length).toBe(1);
+        const operator = (((tree as CallNode).parameters[0]) as BinaryOperationNode);
+        expect(operator.operation).toBe(Operation.Add);
+        expect((operator.left as IntegerNode).value).toBe(12);
+        const right = (operator.right as BinaryOperationNode);
+        expect(right.operation).toBe(Operation.Multiply);
+        expect((right.left as IntegerNode).value).toBe(5);
+        expect((right.right as IntegerNode).value).toBe(10);
+    });
 });

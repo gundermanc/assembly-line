@@ -92,11 +92,10 @@ export function* lexCode(enumerator: StringEnumerator): IterableIterator<Lexeme 
                 }
                 break;
             case '+':
-                yield { type: LexemeType.Operator, text: '+' };
-                c = enumerator.next();
-                break;
             case '-':
-                yield { type: LexemeType.Operator, text: '-' };
+            case '*':
+            case '/':
+                yield { type: LexemeType.Operator, text: c };
                 c = enumerator.next();
                 break;
             case '.':

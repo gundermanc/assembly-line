@@ -12,7 +12,9 @@ export enum NodeType {
 
 export enum Operation {
     Add,
-    Subtract
+    Subtract,
+    Multiply,
+    Divide
 }
 
 export abstract class AstNode {
@@ -87,7 +89,8 @@ export enum ParseError {
     ExpectedOpeningParen,
     ExpectedExpression,
     MalformedFunctionCallExpression,
-    UnrecognizedToken
+    UnrecognizedToken,
+    ExpectedOperand
 }
 
 class LexemeIterator {
@@ -178,7 +181,7 @@ function parseParamList(lexemes: LexemeIterator): AstNode[] | undefined {
 
         params.push(param);
 
-        if (lexemes.next()?.type === LexemeType.Comma) {
+        if (lexemes.current()?.type === LexemeType.Comma) {
             lexemes.next();
         } else {
             break;
@@ -189,62 +192,103 @@ function parseParamList(lexemes: LexemeIterator): AstNode[] | undefined {
 }
 
 function parseExpression(lexemes: LexemeIterator): ParseResult {
-    const additionOperation = tryParseOperatorExpression(lexemes);
-    if (additionOperation) {
-        return additionOperation;
+    const multiplyDivideExpression = parseMultiplyDivideExpressions(lexemes);
+    if (multiplyDivideExpression) {
+        return multiplyDivideExpression;
     }
 
-    return parseLiteralExpression(lexemes);
+    const addSubtractExpression = parseAddSubtractExpression(lexemes);
+    if (addSubtractExpression) {
+        return addSubtractExpression;
+    }
+
+    return ParseError.UnrecognizedToken;
 }
 
-function tryParseOperatorExpression(lexemes: LexemeIterator): ParseResult | undefined {
-    const operator = lexemes.peek();
+function parseMultiplyDivideExpressions(lexemes: LexemeIterator): ParseResult | undefined {
 
-    let operation: Operation | undefined = undefined;
-    if (operator?.type == LexemeType.Operator) {
-        switch (operator.text) {
-            case '+':
-                operation = Operation.Add;
-                break;
-            case '-':
-                operation = Operation.Subtract;
-                break;
-        }
+    const left = parseAddSubtractExpression(lexemes);
+
+     // Check for an operator. If none, we're done.
+     const operator = lexemes.current();
+     if (operator?.type !== LexemeType.Operator) {
+         return left;
+     }
+
+    let operation: Operation;
+    switch (operator.text) {
+        case '*':
+            operation = Operation.Multiply;
+            break;
+        case '/':
+            operation = Operation.Divide;
+            break;
+        default:
+            return parseAddSubtractExpression(lexemes);
     }
 
-    if (operation !== undefined) {
-        const left = parseLiteralExpression(lexemes);
-        if (!isAstNode(left)) {
-            return left;
-        }
+    // Consume the operator.
+    lexemes.next();
 
-        lexemes.next();
-        lexemes.next();
-
-        const right = parseExpression(lexemes);
-        if (!isAstNode(right)) {
-            return right;
-        }
-
+    const right = parseMultiplyDivideExpressions(lexemes);
+    if (isAstNode(left) && isAstNode(right)) {
         return new BinaryOperationNode(operation, left, right)
     }
 
-    // Not applicable.
-    return undefined;
+    return ParseError.ExpectedOperand;
+}
+
+function parseAddSubtractExpression(lexemes: LexemeIterator): ParseResult | undefined {
+
+    // Parse left expression.
+    const left = parseLiteralExpression(lexemes);
+
+    // Check for an operator. If none, we're done.
+    const operator = lexemes.current();
+    if (operator?.type !== LexemeType.Operator) {
+        return left;
+    }
+
+    // Found one, parse it.
+    let operation: Operation;
+    switch (operator.text) {
+        case '+':
+            operation = Operation.Add;
+            break;
+        case '-':
+            operation = Operation.Subtract;
+            break;
+        default:
+            return left;
+    }
+
+    // Consume the operator.
+    lexemes.next();
+
+    const right = parseMultiplyDivideExpressions(lexemes);
+    if (isAstNode(left) && isAstNode(right)) {
+        return new BinaryOperationNode(operation, left, right)
+    }
+
+    return ParseError.ExpectedOperand;
 }
 
 function parseLiteralExpression(lexemes: LexemeIterator): ParseResult {
-    switch (lexemes.current()?.type) {
+    const lexeme = lexemes.current();
+
+    lexemes.next();
+
+    switch (lexeme?.type) {
         case LexemeType.String:
-            const text = lexemes.current()?.text;
+            const text = lexeme?.text;
             return text ? new StringNode(text) : ParseError.UnrecognizedToken;
 
         case LexemeType.Integer:
-            const intValue = lexemes.current()?.text;
+            const intValue = lexeme?.text;
             return intValue ? new IntegerNode(Number(intValue)) : ParseError.UnrecognizedToken;
 
         case LexemeType.Float:
-            const floatValue = lexemes.current()?.text;
+            const floatValue = lexeme?.text;
             return floatValue ? new FloatNode(Number(floatValue)) : ParseError.UnrecognizedToken;
     }
 
