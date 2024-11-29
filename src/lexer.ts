@@ -1,3 +1,8 @@
+const KEYWORDS: ReadonlySet<string> = new Set<string>([
+    'true',
+    'false'
+]);
+
 export enum LexemeType {
     Comma,
     Identifier,
@@ -6,12 +11,17 @@ export enum LexemeType {
     String,
     Integer,
     Float,
-    Operator
+    Operator,
+    Keyword
 }
 
 export interface Lexeme {
     type: LexemeType,
     text: string | undefined
+}
+
+function isLexeme(item: any): item is Lexeme {
+    return (item as Lexeme)?.type !== undefined;
 }
 
 export enum LexError {
@@ -95,6 +105,7 @@ export function* lexCode(enumerator: StringEnumerator): IterableIterator<Lexeme 
             case '-':
             case '*':
             case '/':
+            case '!':
                 yield { type: LexemeType.Operator, text: c };
                 c = enumerator.next();
                 break;
@@ -107,6 +118,20 @@ export function* lexCode(enumerator: StringEnumerator): IterableIterator<Lexeme 
                     }
                 }
                 break;
+            case '|':
+                if (enumerator.peek() === '|') {
+                    yield { type: LexemeType.Operator, text: '||' };
+                    c = enumerator.next();
+                    c = enumerator.next();
+                }
+                break;
+            case '&':
+                if (enumerator.peek() === '&') {
+                    yield { type: LexemeType.Operator, text: '&&' };
+                    c = enumerator.next();
+                    c = enumerator.next();
+                }
+                break;
             case undefined:
                 return;
             default:
@@ -116,7 +141,7 @@ export function* lexCode(enumerator: StringEnumerator): IterableIterator<Lexeme 
                         yield id;
                     }
                 } else if (isAlphaNumeric(c)) {
-                    let id = lexIdentifier(enumerator);
+                    let id = lexIdentifierOrKeyword(enumerator);
                     if (id) {
                         yield id;
                     }
@@ -126,6 +151,24 @@ export function* lexCode(enumerator: StringEnumerator): IterableIterator<Lexeme 
                 break;
         }
     }
+}
+
+function lexIdentifierOrKeyword(enumerator: StringEnumerator): Lexeme | LexError | undefined {
+    const identifier = lexIdentifier(enumerator);
+
+    // Check if identifier could be a keyword.
+    if (isLexeme(identifier) &&
+        identifier.text &&
+        KEYWORDS.has(identifier.text)) {
+
+        return {
+            type: LexemeType.Keyword,
+            text: identifier.text
+        };
+    }
+
+    // Not a keyword, return as identifier.
+    return identifier;
 }
 
 function lexIdentifier(enumerator: StringEnumerator): Lexeme | LexError | undefined {

@@ -159,4 +159,22 @@ describe('Lexer tests', () => {
         expect(divisionLexemesArray[1]).toStrictEqual({ type: LexemeType.Operator, text: "/" });
         expect(divisionLexemesArray[2]).toStrictEqual({ type: LexemeType.Integer, text: "2" });
     });
+
+    test('Boolean', async () => {
+        // Keywords and boolean operators
+        const keywordLexemes = lexCode(
+            new StringEnumerator(`true || false && true && !true `));
+
+        const keywordLexemesArray = Array.from(keywordLexemes);
+
+        expect(keywordLexemesArray.length).toBe(8);
+        expect(keywordLexemesArray[0]).toStrictEqual({ type: LexemeType.Keyword, text: "true" });
+        expect(keywordLexemesArray[1]).toStrictEqual({ type: LexemeType.Operator, text: "||" });
+        expect(keywordLexemesArray[2]).toStrictEqual({ type: LexemeType.Keyword, text: "false" });
+        expect(keywordLexemesArray[3]).toStrictEqual({ type: LexemeType.Operator, text: "&&" });
+        expect(keywordLexemesArray[4]).toStrictEqual({ type: LexemeType.Keyword, text: "true" });
+        expect(keywordLexemesArray[5]).toStrictEqual({ type: LexemeType.Operator, text: "&&" });
+        expect(keywordLexemesArray[6]).toStrictEqual({ type: LexemeType.Operator, text: "!" });
+        expect(keywordLexemesArray[7]).toStrictEqual({ type: LexemeType.Keyword, text: "true" });
+    });
 });
