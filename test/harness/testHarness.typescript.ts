@@ -1,10 +1,12 @@
 import { TypeScriptCodeGenerator } from '../../src/codeGenerator';
 import { AstNode } from '../../src/parser';
+import { SemanticModel } from '../../src/semanticModel';
+import { SymbolTable } from '../../src/symbols';
 import { TestHarnessBase } from './testHarness';
 
 export class TypeScriptTestHarness extends TestHarnessBase {
-    generateCodeFromNode(astNode: AstNode): string {
-        const generator = new TypeScriptCodeGenerator(astNode);
+    generateCodeFromNode(astNode: AstNode, semanticModel: SemanticModel): string {
+        const generator = new TypeScriptCodeGenerator(astNode, semanticModel);
         generator.visit();
 
         return generator.code;
@@ -43,5 +45,9 @@ export class TypeScriptTestHarness extends TestHarnessBase {
 
     generateBuildCommand(): string {
         return 'npx tsc -p tsconfig.json && node main.js';
+    }
+
+    definePlatformSymbols(symbols: SymbolTable): void {
+        TypeScriptCodeGenerator.definePlatformSymbols(symbols);
     }
 }

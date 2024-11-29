@@ -1,7 +1,19 @@
 import { lexCode, StringEnumerator } from "../src/lexer";
 import { AstNode, CallNode, parse } from "../src/parser";
-import { buildSemanticModel, SemanticError, SemanticNode } from '../src/semanticModel';
+import { buildSemanticModel, SemanticError, SemanticModel } from '../src/semanticModel';
 import { PlatformFunctionDefinition, SymbolTable, SymbolType } from "../src/symbols";
+
+function expectErrors(semanticModel: SemanticModel, errors: SemanticError[]): void {
+    const modelErrors = semanticModel.errors();
+
+    expect(modelErrors.size).toBe(errors.length);
+
+    let i = 0;
+    for (const item in modelErrors) {
+        expect(item).toBe(errors[i]);
+        i++;
+    }
+}
 
 describe('Function call semantic model tests', () => {
     test('No parameter matching function call', async () => {
@@ -13,7 +25,7 @@ describe('Function call semantic model tests', () => {
         symbolTable.defineSymbol(new PlatformFunctionDefinition('log', 'Console.WriteLine', [], 'void'))
 
         const semanticModel = buildSemanticModel(tree as AstNode, symbolTable);
-        expect((semanticModel as SemanticNode).returnType).toBe('void');
+        expect(semanticModel.nodeTypes.get(tree as AstNode)).toBe('void');
     });
 
     test('No parameter mis-matched count function call', async () => {
@@ -25,7 +37,7 @@ describe('Function call semantic model tests', () => {
         symbolTable.defineSymbol(new PlatformFunctionDefinition('log', 'Console.WriteLine', ['string'], 'void'))
 
         const semanticModel = buildSemanticModel(tree as AstNode, symbolTable);
-        expect(semanticModel).toBe(SemanticError.MismatchedParameterCount);
+        expect(semanticModel.nodeTypes.get(tree as AstNode)).toBe(SemanticError.MismatchedParameterCount);
     });
 
     test('Yes parameter matching type function call', async () => {
@@ -37,7 +49,7 @@ describe('Function call semantic model tests', () => {
         symbolTable.defineSymbol(new PlatformFunctionDefinition('log', 'Console.WriteLine', ['string'], 'void'))
 
         const semanticModel = buildSemanticModel(tree as AstNode, symbolTable);
-        expect((semanticModel as SemanticNode).returnType).toBe('void');
+        expect(semanticModel.nodeTypes.get(tree as AstNode)).toBe('void');
     });
 });
 
@@ -51,7 +63,7 @@ describe('Numeric type semantic model tests', () => {
         symbolTable.defineSymbol(new PlatformFunctionDefinition('log', 'Console.WriteLine', ['i32'], 'void'))
 
         const semanticModel = buildSemanticModel(tree as AstNode, symbolTable);
-        expect((semanticModel as SemanticNode).returnType).toBe('void');
+        expect(semanticModel.nodeTypes.get(tree as AstNode)).toBe('void');
     });
 
     test('Integer type tests', async () => {
@@ -63,7 +75,7 @@ describe('Numeric type semantic model tests', () => {
         symbolTable.defineSymbol(new PlatformFunctionDefinition('log', 'Console.WriteLine', ['f32'], 'void'))
 
         const semanticModel = buildSemanticModel(tree as AstNode, symbolTable);
-        expect((semanticModel as SemanticNode).returnType).toBe('void');
+        expect(semanticModel.nodeTypes.get(tree as AstNode)).toBe('void');
     });
 });
 
@@ -77,7 +89,7 @@ describe('Operator type semantic model tests', () => {
         symbolTable.defineSymbol(new PlatformFunctionDefinition('log', 'Console.WriteLine', ['i32'], 'void'))
 
         const semanticModel = buildSemanticModel(tree as AstNode, symbolTable);
-        expect((semanticModel as SemanticNode).returnType).toBe('void');
+        expect(semanticModel.nodeTypes.get(tree as AstNode)).toBe('void');
     });
 
     test('Mismatching Add types tests', async () => {
@@ -89,7 +101,7 @@ describe('Operator type semantic model tests', () => {
         symbolTable.defineSymbol(new PlatformFunctionDefinition('log', 'Console.WriteLine', ['i32'], 'void'))
 
         const semanticModel = buildSemanticModel(tree as AstNode, symbolTable);
-        expect(semanticModel).toBe(SemanticError.IncompatibleOperands);
+        expectErrors(semanticModel, [SemanticError.IncompatibleOperands, SemanticError.MismatchedParameterType]);
     });
 
     test('Matching Multiply and Divide types tests', async () => {
@@ -101,7 +113,7 @@ describe('Operator type semantic model tests', () => {
         symbolTable.defineSymbol(new PlatformFunctionDefinition('log', 'Console.WriteLine', ['i32'], 'void'))
 
         const semanticModel = buildSemanticModel(tree as AstNode, symbolTable);
-        expect((semanticModel as SemanticNode).returnType).toBe('void');
+        expectErrors(semanticModel, []);
     });
 
     test('Mismatching Multiply types tests', async () => {
@@ -113,7 +125,7 @@ describe('Operator type semantic model tests', () => {
         symbolTable.defineSymbol(new PlatformFunctionDefinition('log', 'Console.WriteLine', ['i32'], 'void'))
 
         const semanticModel = buildSemanticModel(tree as AstNode, symbolTable);
-        expect(semanticModel).toBe(SemanticError.IncompatibleOperands);
+        expectErrors(semanticModel, [SemanticError.IncompatibleOperands]);
     });
 
     test('Mismatching Divide types tests', async () => {
@@ -125,6 +137,6 @@ describe('Operator type semantic model tests', () => {
         symbolTable.defineSymbol(new PlatformFunctionDefinition('log', 'Console.WriteLine', ['i32'], 'void'))
 
         const semanticModel = buildSemanticModel(tree as AstNode, symbolTable);
-        expect(semanticModel).toBe(SemanticError.IncompatibleOperands);
+        expectErrors(semanticModel, [SemanticError.IncompatibleOperands]);
     });
 });

@@ -21,7 +21,7 @@ describe('Demos compiling to and running as Python', () => {
     });
 
     test('Addition float function calls', async () => {
-        const result = await harness.evaluateCode(`logI(3.5 + 4.5);`);
+        const result = await harness.evaluateCode(`logF(3.5 + 4.5);`);
         expect(isStringObject(result));
         expect(result.trim()).toEqual('8.0');
     });
@@ -33,8 +33,20 @@ describe('Demos compiling to and running as Python', () => {
     });
 
     test('Subtraction float function calls', async () => {
-        const result = await harness.evaluateCode(`logI(0.5 - .25);`);
+        const result = await harness.evaluateCode(`logF(0.5 - .25);`);
         expect(isStringObject(result));
         expect(result.trim()).toEqual('0.25');
+    });
+
+    test('Mixed math float function calls', async () => {
+        const result = await harness.evaluateCode(`logF(3.5 + 4.5 * 2.0);`);
+        expect(isStringObject(result));
+        expect(result.trim()).toEqual('12.5');
+    });
+
+    test('Mixed math int function calls', async () => {
+        const result = await harness.evaluateCode(`logI(3 / 2 + 2);`);
+        expect(isStringObject(result));
+        expect(result.trim()).toEqual('3');
     });
 });

@@ -1,5 +1,5 @@
 import { AstNode, BinaryOperationNode, CallNode, FloatNode, IntegerNode, isAstNode, NodeType, Operation, StringNode } from "./parser";
-import { AstVisitor } from "./semanticModel";
+import { AstVisitor, isSemanticType, SemanticModel } from "./semanticModel";
 import { PlatformFunctionDefinition, SymbolTable, SymbolType } from "./symbols";
 
 export enum CodeGeneratorError {
@@ -8,12 +8,14 @@ export enum CodeGeneratorError {
 }
 
 abstract class CodeGeneratorBase extends AstVisitor<CodeGeneratorError> {
-    public symbols: SymbolTable;
+    public readonly symbols: SymbolTable;
+    public readonly semanticModel: SemanticModel;
 
-    constructor(root: AstNode) {
+    constructor(root: AstNode, semanticModel: SemanticModel) {
         super(root);
 
-        this.symbols = new SymbolTable();
+        this.semanticModel = semanticModel;
+        this.symbols = semanticModel.symbolTable;
     }
 
     protected nodeToCode(node: AstNode): string | undefined {
@@ -46,6 +48,12 @@ abstract class CodeGeneratorBase extends AstVisitor<CodeGeneratorError> {
             case Operation.Subtract:
                 operation = '-';
                 break;
+            case Operation.Multiply:
+                operation = '*';
+                break;
+            case Operation.Divide:
+                operation = '/';
+                break;
         }
 
         if (operation && isAstNode(operatorNode.left) && isAstNode(operatorNode.right)) {
@@ -63,10 +71,8 @@ export class CSharpCodeGenerator extends CodeGeneratorBase {
 
     public code: string = "";
 
-    constructor(root: AstNode) {
-        super(root);
-
-        this.definePlatformSymbols();
+    constructor(root: AstNode, semanticModel: SemanticModel) {
+        super(root, semanticModel);
     }
 
     protected visitCall(call: CallNode): CodeGeneratorError {
@@ -89,7 +95,7 @@ export class CSharpCodeGenerator extends CodeGeneratorBase {
         return CodeGeneratorError.UnknownError;
     }
 
-    private definePlatformSymbols() {
+    public static definePlatformSymbols(symbols: SymbolTable) {
         const logStringSymbol: PlatformFunctionDefinition = { 
             symbolType: SymbolType.PlatformFunction,
             name: 'logS',
@@ -97,7 +103,7 @@ export class CSharpCodeGenerator extends CodeGeneratorBase {
             parameterTypes: ['string'],
             returnType: 'void'
         };
-        this.symbols.defineSymbol(logStringSymbol);
+        symbols.defineSymbol(logStringSymbol);
 
         const logIntegerSymbol: PlatformFunctionDefinition = { 
             symbolType: SymbolType.PlatformFunction,
@@ -106,7 +112,7 @@ export class CSharpCodeGenerator extends CodeGeneratorBase {
             parameterTypes: ['i32'],
             returnType: 'void'
         };
-        this.symbols.defineSymbol(logIntegerSymbol);
+        symbols.defineSymbol(logIntegerSymbol);
 
         const logFloatSymbol: PlatformFunctionDefinition = { 
             symbolType: SymbolType.PlatformFunction,
@@ -115,7 +121,7 @@ export class CSharpCodeGenerator extends CodeGeneratorBase {
             parameterTypes: ['f32'],
             returnType: 'void'
         };
-        this.symbols.defineSymbol(logFloatSymbol);
+        symbols.defineSymbol(logFloatSymbol);
     }
 }
 
@@ -123,10 +129,8 @@ export class TypeScriptCodeGenerator extends CodeGeneratorBase {
 
     public code: string = "";
 
-    constructor(root: AstNode) {
-        super(root);
-
-        this.definePlatformSymbols();
+    constructor(root: AstNode, semanticModel: SemanticModel) {
+        super(root, semanticModel);
     }
 
     protected visitCall(call: CallNode): CodeGeneratorError {
@@ -145,11 +149,51 @@ export class TypeScriptCodeGenerator extends CodeGeneratorBase {
         return CodeGeneratorError.None;
     }
 
+    protected operatorNodeToCode(node: AstNode): string | undefined {
+        const operatorNode = node as BinaryOperationNode;
+
+        let operation: string | undefined;
+
+        switch (operatorNode.operation) {
+            case Operation.Add:
+                operation = '+';
+                break;
+            case Operation.Subtract:
+                operation = '-';
+                break;
+            case Operation.Multiply:
+                operation = '*';
+                break;
+            case Operation.Divide:
+                operation = '/';
+                break;
+        }
+
+        if (operation && isAstNode(operatorNode.left) && isAstNode(operatorNode.right)) {
+            const left = this.nodeToCode(operatorNode.left);
+            const right = this.nodeToCode(operatorNode.right);
+
+            let code = `${left} ${operation} ${right}`;
+
+            // TypeScript has no native integer type so we need to simulate it when
+            // doing division by doing a math.trunc() on the result of division
+            // to drop the decimal.
+            const operationType = this.semanticModel.nodeTypes.get(operatorNode);
+            if (isSemanticType(operationType) && operationType === 'i32' && operatorNode.operation == Operation.Divide) {
+                code = `Math.trunc(${code})`;
+            }
+
+            return code;
+        }
+
+        return undefined;
+    }
+
     protected unmatchedRule(): CodeGeneratorError {
         return CodeGeneratorError.UnknownError;
     }
 
-    private definePlatformSymbols() {
+    public static definePlatformSymbols(symbols: SymbolTable) {
         const logStringSymbol: PlatformFunctionDefinition = { 
             symbolType: SymbolType.PlatformFunction,
             name: 'logS',
@@ -157,7 +201,7 @@ export class TypeScriptCodeGenerator extends CodeGeneratorBase {
             parameterTypes: ['string'],
             returnType: 'void'
         };
-        this.symbols.defineSymbol(logStringSymbol);
+        symbols.defineSymbol(logStringSymbol);
 
         const logIntegerSymbol: PlatformFunctionDefinition = { 
             symbolType: SymbolType.PlatformFunction,
@@ -166,7 +210,7 @@ export class TypeScriptCodeGenerator extends CodeGeneratorBase {
             parameterTypes: ['i32'],
             returnType: 'void'
         };
-        this.symbols.defineSymbol(logIntegerSymbol);
+        symbols.defineSymbol(logIntegerSymbol);
 
         const logFloatSymbol: PlatformFunctionDefinition = { 
             symbolType: SymbolType.PlatformFunction,
@@ -175,18 +219,17 @@ export class TypeScriptCodeGenerator extends CodeGeneratorBase {
             parameterTypes: ['f32'],
             returnType: 'void'
         };
-        this.symbols.defineSymbol(logFloatSymbol);
+        symbols.defineSymbol(logFloatSymbol);
     }
 }
 
 export class PythonCodeGenerator extends CodeGeneratorBase {
 
-    public code: string = "";
+    // Need to import math for math.trunc() function.
+    public code: string = 'import math\n';
 
-    constructor(root: AstNode) {
-        super(root);
-
-        this.definePlatformSymbols();
+    constructor(root: AstNode, semanticModel: SemanticModel) {
+        super(root, semanticModel);
     }
 
     protected visitCall(call: CallNode): CodeGeneratorError {
@@ -209,7 +252,46 @@ export class PythonCodeGenerator extends CodeGeneratorBase {
         return CodeGeneratorError.UnknownError;
     }
 
-    private definePlatformSymbols() {
+    protected operatorNodeToCode(node: AstNode): string | undefined {
+        const operatorNode = node as BinaryOperationNode;
+
+        let operation: string | undefined;
+
+        switch (operatorNode.operation) {
+            case Operation.Add:
+                operation = '+';
+                break;
+            case Operation.Subtract:
+                operation = '-';
+                break;
+            case Operation.Multiply:
+                operation = '*';
+                break;
+            case Operation.Divide:
+                operation = '/';
+                break;
+        }
+
+        if (operation && isAstNode(operatorNode.left) && isAstNode(operatorNode.right)) {
+            const left = this.nodeToCode(operatorNode.left);
+            const right = this.nodeToCode(operatorNode.right);
+
+            let code = `${left} ${operation} ${right}`;
+
+            // Python has no native integer type so we need to simulate it when
+            // doing division by doing a Math.floor() or Math.ceiling() as needed.
+            const operationType = this.semanticModel.nodeTypes.get(operatorNode);
+            if (isSemanticType(operationType) && operationType === 'i32' && operatorNode.operation == Operation.Divide) {
+                code = `math.trunc(${code})`;
+            }
+
+            return code;
+        }
+
+        return undefined;
+    }
+
+    public static definePlatformSymbols(symbols: SymbolTable) {
         const logStringSymbol: PlatformFunctionDefinition = { 
             symbolType: SymbolType.PlatformFunction,
             name: 'logS',
@@ -217,7 +299,7 @@ export class PythonCodeGenerator extends CodeGeneratorBase {
             parameterTypes: ['string'],
             returnType: 'void'
         };
-        this.symbols.defineSymbol(logStringSymbol);
+        symbols.defineSymbol(logStringSymbol);
 
         const logIntegerSymbol: PlatformFunctionDefinition = { 
             symbolType: SymbolType.PlatformFunction,
@@ -226,7 +308,7 @@ export class PythonCodeGenerator extends CodeGeneratorBase {
             parameterTypes: ['i32'],
             returnType: 'void'
         };
-        this.symbols.defineSymbol(logIntegerSymbol);
+        symbols.defineSymbol(logIntegerSymbol);
 
         const logFloatSymbol: PlatformFunctionDefinition = { 
             symbolType: SymbolType.PlatformFunction,
@@ -235,6 +317,6 @@ export class PythonCodeGenerator extends CodeGeneratorBase {
             parameterTypes: ['f32'],
             returnType: 'void'
         };
-        this.symbols.defineSymbol(logFloatSymbol);
+        symbols.defineSymbol(logFloatSymbol);
     }
 }

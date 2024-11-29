@@ -1,10 +1,12 @@
 import { PythonCodeGenerator } from '../../src/codeGenerator';
 import { AstNode } from '../../src/parser';
+import { SemanticModel } from '../../src/semanticModel';
+import { SymbolTable } from '../../src/symbols';
 import { TestHarnessBase } from './testHarness';
 
 export class PythonTestHarness extends TestHarnessBase {
-    generateCodeFromNode(astNode: AstNode): string {
-        const generator = new PythonCodeGenerator(astNode);
+    generateCodeFromNode(astNode: AstNode, semanticModel: SemanticModel): string {
+        const generator = new PythonCodeGenerator(astNode, semanticModel);
         generator.visit();
 
         return generator.code;
@@ -24,5 +26,9 @@ export class PythonTestHarness extends TestHarnessBase {
 
     generateBuildCommand(): string {
         return 'python main.py';
+    }
+
+    definePlatformSymbols(symbols: SymbolTable): void {
+        PythonCodeGenerator.definePlatformSymbols(symbols);
     }
 }

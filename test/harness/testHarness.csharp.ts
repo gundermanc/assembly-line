@@ -1,10 +1,12 @@
 import { AstNode } from '../../src/parser';
 import { CSharpCodeGenerator } from '../../src/codeGenerator';
 import { TestHarnessBase } from './testHarness';
+import { SemanticModel } from '../../src/semanticModel';
+import { SymbolTable } from '../../src/symbols';
 
 export class CSharpTestHarness extends TestHarnessBase {
-    generateCodeFromNode(astNode: AstNode): string {
-        const generator = new CSharpCodeGenerator(astNode);
+    generateCodeFromNode(astNode: AstNode, semanticModel: SemanticModel): string {
+        const generator = new CSharpCodeGenerator(astNode, semanticModel);
         generator.visit();
 
         return generator.code;
@@ -24,6 +26,10 @@ export class CSharpTestHarness extends TestHarnessBase {
 
     generateBuildCommand(): string {
         return 'dotnet run';
+    }
+
+    definePlatformSymbols(symbols: SymbolTable): void {
+        CSharpCodeGenerator.definePlatformSymbols(symbols);
     }
 }
 

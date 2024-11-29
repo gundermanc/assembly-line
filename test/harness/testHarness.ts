@@ -5,6 +5,7 @@ import * as util from 'util';
 import { lexCode, StringEnumerator } from '../../src/lexer';
 import { AstNode, parse } from '../../src/parser';
 import { SymbolTable } from '../../src/symbols';
+import { buildSemanticModel, SemanticModel } from '../../src/semanticModel';
 
 const TestsOutputDir: string = 'test_outputs';
 
@@ -41,14 +42,18 @@ export abstract class TestHarnessBase {
         const tree = parse(lexemes);
 
         var symbolTable = new SymbolTable();
+        this.definePlatformSymbols(symbolTable);
 
-        // TODO: type check.
-        //const semanticModel = buildSemanticModel(tree as AstNode, symbolTable);
+        const semanticModel = buildSemanticModel(tree as AstNode, symbolTable);
+        if (semanticModel.hasError()) {
+            semanticModel.hasError();
+            throw Error(`Type check failed`)
+        }
 
-        return this.generateCodeFromNode(tree as AstNode);
+        return this.generateCodeFromNode(tree as AstNode, semanticModel);
     }
 
-    abstract generateCodeFromNode(astNode: AstNode): string;
+    abstract generateCodeFromNode(astNode: AstNode, semanticModel: SemanticModel): string;
 
     abstract generateProjectFile(): string;
 
@@ -57,4 +62,6 @@ export abstract class TestHarnessBase {
     abstract generateFileName(): string;
 
     abstract generateBuildCommand(): string;
+
+    abstract definePlatformSymbols(symbols: SymbolTable): void
 }
