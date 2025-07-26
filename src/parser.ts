@@ -7,14 +7,19 @@ export enum NodeType {
     StringNode,
     IntegerNode,
     FloatNode,
-    BinaryOperation
+    BooleanNode,
+    BinaryOperation,
+    UnaryOperation
 };
 
 export enum Operation {
     Add,
     Subtract,
     Multiply,
-    Divide
+    Divide,
+    And,
+    Or,
+    Not
 }
 
 export abstract class AstNode {
@@ -39,6 +44,17 @@ export class BinaryOperationNode extends AstNode {
         this.operation = operation;
         this.left = left;
         this.right = right;
+    }
+}
+
+export class UnaryOperationNode extends AstNode {
+    public readonly operation: Operation;
+    public readonly operand: ParseResult;
+
+    constructor(operation: Operation, operand: AstNode) {
+        super(NodeType.UnaryOperation);
+        this.operation = operation;
+        this.operand = operand;
     }
 }
 
@@ -79,6 +95,16 @@ export class FloatNode extends AstNode {
 
     constructor(value: number) {
         super(NodeType.FloatNode);
+
+        this.value = value;
+    }
+}
+
+export class BooleanNode extends AstNode {
+    value: boolean;
+
+    constructor(value: boolean) {
+        super(NodeType.BooleanNode);
 
         this.value = value;
     }
@@ -192,22 +218,80 @@ function parseParamList(lexemes: LexemeIterator): AstNode[] | undefined {
 }
 
 function parseExpression(lexemes: LexemeIterator): ParseResult {
-    const multiplyDivideExpression = parseMultiplyDivideExpressions(lexemes);
-    if (multiplyDivideExpression) {
-        return multiplyDivideExpression;
+    return parseOrExpression(lexemes);
+}
+
+function parseOrExpression(lexemes: LexemeIterator): ParseResult | undefined {
+    const left = parseAndExpression(lexemes);
+    if (!left) {
+        return undefined;
     }
 
-    const addSubtractExpression = parseAddSubtractExpression(lexemes);
-    if (addSubtractExpression) {
-        return addSubtractExpression;
+    // Check for an operator. If none, we're done.
+    const operator = lexemes.current();
+    if (operator?.type !== LexemeType.Operator || operator.text !== '||') {
+        return left;
     }
 
-    return ParseError.UnrecognizedToken;
+    // Consume the operator.
+    lexemes.next();
+
+    const right = parseOrExpression(lexemes);
+    if (isAstNode(left) && isAstNode(right)) {
+        return new BinaryOperationNode(Operation.Or, left, right);
+    }
+
+    return ParseError.ExpectedOperand;
+}
+
+function parseAndExpression(lexemes: LexemeIterator): ParseResult | undefined {
+    const left = parseNotExpression(lexemes);
+    if (!left) {
+        return undefined;
+    }
+
+    // Check for an operator. If none, we're done.
+    const operator = lexemes.current();
+    if (operator?.type !== LexemeType.Operator || operator.text !== '&&') {
+        return left;
+    }
+
+    // Consume the operator.
+    lexemes.next();
+
+    const right = parseAndExpression(lexemes);
+    if (isAstNode(left) && isAstNode(right)) {
+        return new BinaryOperationNode(Operation.And, left, right);
+    }
+
+    return ParseError.ExpectedOperand;
+}
+
+function parseNotExpression(lexemes: LexemeIterator): ParseResult | undefined {
+    const operator = lexemes.current();
+    if (operator?.type === LexemeType.Operator && operator.text === '!') {
+        // Consume the operator.
+        lexemes.next();
+
+        const operand = parseNotExpression(lexemes);
+        if (isAstNode(operand)) {
+            return new UnaryOperationNode(Operation.Not, operand);
+        }
+
+        return ParseError.ExpectedOperand;
+    }
+
+    // If no NOT operator, continue to arithmetic expressions
+    return parseArithmeticExpression(lexemes);
+}
+
+function parseArithmeticExpression(lexemes: LexemeIterator): ParseResult | undefined {
+    return parseAddSubtractExpression(lexemes);
 }
 
 function parseMultiplyDivideExpressions(lexemes: LexemeIterator): ParseResult | undefined {
 
-    const left = parseAddSubtractExpression(lexemes);
+    const left = parseLiteralExpression(lexemes);
 
      // Check for an operator. If none, we're done.
      const operator = lexemes.current();
@@ -224,7 +308,7 @@ function parseMultiplyDivideExpressions(lexemes: LexemeIterator): ParseResult | 
             operation = Operation.Divide;
             break;
         default:
-            return parseAddSubtractExpression(lexemes);
+            return left;
     }
 
     // Consume the operator.
@@ -241,7 +325,7 @@ function parseMultiplyDivideExpressions(lexemes: LexemeIterator): ParseResult | 
 function parseAddSubtractExpression(lexemes: LexemeIterator): ParseResult | undefined {
 
     // Parse left expression.
-    const left = parseLiteralExpression(lexemes);
+    const left = parseMultiplyDivideExpressions(lexemes);
 
     // Check for an operator. If none, we're done.
     const operator = lexemes.current();
@@ -265,9 +349,9 @@ function parseAddSubtractExpression(lexemes: LexemeIterator): ParseResult | unde
     // Consume the operator.
     lexemes.next();
 
-    const right = parseMultiplyDivideExpressions(lexemes);
+    const right = parseAddSubtractExpression(lexemes);
     if (isAstNode(left) && isAstNode(right)) {
-        return new BinaryOperationNode(operation, left, right)
+        return new BinaryOperationNode(operation, left, right);
     }
 
     return ParseError.ExpectedOperand;
@@ -290,6 +374,15 @@ function parseLiteralExpression(lexemes: LexemeIterator): ParseResult {
         case LexemeType.Float:
             const floatValue = lexeme?.text;
             return floatValue ? new FloatNode(Number(floatValue)) : ParseError.UnrecognizedToken;
+
+        case LexemeType.Keyword:
+            const keyword = lexeme?.text;
+            if (keyword === 'true') {
+                return new BooleanNode(true);
+            } else if (keyword === 'false') {
+                return new BooleanNode(false);
+            }
+            break;
     }
 
     return ParseError.ExpectedExpression;
