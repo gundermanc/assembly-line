@@ -140,3 +140,77 @@ describe('Operator type semantic model tests', () => {
         expectErrors(semanticModel, [SemanticError.IncompatibleOperands]);
     });
 });
+
+describe('Boolean type semantic model tests', () => {
+    test('Boolean literal type tests', async () => {
+        const stringEnumerator = new StringEnumerator(`println(true)`);
+        const lexemes = lexCode(stringEnumerator); 
+        const tree = parse(lexemes);
+
+        var symbolTable = new SymbolTable();
+        symbolTable.defineSymbol(new PlatformFunctionDefinition('println', 'console.log', ['bool'], 'void'))
+
+        const semanticModel = buildSemanticModel(tree as AstNode, symbolTable);
+        expect(semanticModel.nodeTypes.get((tree as CallNode).parameters[0])).toBe('bool');
+    });
+
+    test('Boolean AND operation type tests', async () => {
+        const stringEnumerator = new StringEnumerator(`println(true && false)`);
+        const lexemes = lexCode(stringEnumerator); 
+        const tree = parse(lexemes);
+
+        var symbolTable = new SymbolTable();
+        symbolTable.defineSymbol(new PlatformFunctionDefinition('println', 'console.log', ['bool'], 'void'))
+
+        const semanticModel = buildSemanticModel(tree as AstNode, symbolTable);
+        expect(semanticModel.nodeTypes.get((tree as CallNode).parameters[0])).toBe('bool');
+    });
+
+    test('Boolean OR operation type tests', async () => {
+        const stringEnumerator = new StringEnumerator(`println(false || true)`);
+        const lexemes = lexCode(stringEnumerator); 
+        const tree = parse(lexemes);
+
+        var symbolTable = new SymbolTable();
+        symbolTable.defineSymbol(new PlatformFunctionDefinition('println', 'console.log', ['bool'], 'void'))
+
+        const semanticModel = buildSemanticModel(tree as AstNode, symbolTable);
+        expect(semanticModel.nodeTypes.get((tree as CallNode).parameters[0])).toBe('bool');
+    });
+
+    test('Boolean NOT operation type tests', async () => {
+        const stringEnumerator = new StringEnumerator(`println(!true)`);
+        const lexemes = lexCode(stringEnumerator); 
+        const tree = parse(lexemes);
+
+        var symbolTable = new SymbolTable();
+        symbolTable.defineSymbol(new PlatformFunctionDefinition('println', 'console.log', ['bool'], 'void'))
+
+        const semanticModel = buildSemanticModel(tree as AstNode, symbolTable);
+        expect(semanticModel.nodeTypes.get((tree as CallNode).parameters[0])).toBe('bool');
+    });
+
+    test('Boolean operation with incompatible operands', async () => {
+        const stringEnumerator = new StringEnumerator(`println(true && 5)`);
+        const lexemes = lexCode(stringEnumerator); 
+        const tree = parse(lexemes);
+
+        var symbolTable = new SymbolTable();
+        symbolTable.defineSymbol(new PlatformFunctionDefinition('println', 'console.log', ['bool'], 'void'))
+
+        const semanticModel = buildSemanticModel(tree as AstNode, symbolTable);
+        expectErrors(semanticModel, [SemanticError.IncompatibleOperands]);
+    });
+
+    test('NOT operation with incompatible operand', async () => {
+        const stringEnumerator = new StringEnumerator(`println(!5)`);
+        const lexemes = lexCode(stringEnumerator); 
+        const tree = parse(lexemes);
+
+        var symbolTable = new SymbolTable();
+        symbolTable.defineSymbol(new PlatformFunctionDefinition('println', 'console.log', ['i32'], 'void'))
+
+        const semanticModel = buildSemanticModel(tree as AstNode, symbolTable);
+        expectErrors(semanticModel, [SemanticError.IncompatibleOperands]);
+    });
+});

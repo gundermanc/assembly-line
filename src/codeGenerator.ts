@@ -1,4 +1,4 @@
-import { AstNode, BinaryOperationNode, CallNode, FloatNode, IntegerNode, isAstNode, NodeType, Operation, StringNode } from "./parser";
+import { AstNode, BinaryOperationNode, BooleanNode, CallNode, FloatNode, IntegerNode, isAstNode, NodeType, Operation, StringNode, UnaryOperationNode } from "./parser";
 import { AstVisitor, isSemanticType, SemanticModel } from "./semanticModel";
 import { PlatformFunctionDefinition, SymbolTable, SymbolType } from "./symbols";
 
@@ -29,8 +29,33 @@ abstract class CodeGeneratorBase extends AstVisitor<CodeGeneratorError> {
             case NodeType.FloatNode:
                 return `${(node as FloatNode).value}`;
 
+            case NodeType.BooleanNode:
+                return (node as BooleanNode).value ? 'true' : 'false';
+
             case NodeType.BinaryOperation:
                 return this.operatorNodeToCode(node);
+
+            case NodeType.UnaryOperation:
+                return this.unaryOperatorNodeToCode(node);
+        }
+
+        return undefined;
+    }
+
+    protected unaryOperatorNodeToCode(node: AstNode): string | undefined {
+        const operatorNode = node as UnaryOperationNode;
+
+        let operation: string | undefined;
+
+        switch (operatorNode.operation) {
+            case Operation.Not:
+                operation = '!';
+                break;
+        }
+
+        if (operation && isAstNode(operatorNode.operand)) {
+            const operand = this.nodeToCode(operatorNode.operand);
+            return `${operation}${operand}`;
         }
 
         return undefined;
@@ -53,6 +78,12 @@ abstract class CodeGeneratorBase extends AstVisitor<CodeGeneratorError> {
                 break;
             case Operation.Divide:
                 operation = '/';
+                break;
+            case Operation.And:
+                operation = '&&';
+                break;
+            case Operation.Or:
+                operation = '||';
                 break;
         }
 
@@ -122,6 +153,15 @@ export class CSharpCodeGenerator extends CodeGeneratorBase {
             returnType: 'void'
         };
         symbols.defineSymbol(logFloatSymbol);
+
+        const logBooleanSymbol: PlatformFunctionDefinition = { 
+            symbolType: SymbolType.PlatformFunction,
+            name: 'logB',
+            platformName: 'System.Console.WriteLine',
+            parameterTypes: ['bool'],
+            returnType: 'void'
+        };
+        symbols.defineSymbol(logBooleanSymbol);
     }
 }
 
@@ -166,6 +206,12 @@ export class TypeScriptCodeGenerator extends CodeGeneratorBase {
                 break;
             case Operation.Divide:
                 operation = '/';
+                break;
+            case Operation.And:
+                operation = '&&';
+                break;
+            case Operation.Or:
+                operation = '||';
                 break;
         }
 
@@ -220,6 +266,15 @@ export class TypeScriptCodeGenerator extends CodeGeneratorBase {
             returnType: 'void'
         };
         symbols.defineSymbol(logFloatSymbol);
+
+        const logBooleanSymbol: PlatformFunctionDefinition = { 
+            symbolType: SymbolType.PlatformFunction,
+            name: 'logB',
+            platformName: 'console.log',
+            parameterTypes: ['bool'],
+            returnType: 'void'
+        };
+        symbols.defineSymbol(logBooleanSymbol);
     }
 }
 
@@ -252,6 +307,35 @@ export class PythonCodeGenerator extends CodeGeneratorBase {
         return CodeGeneratorError.UnknownError;
     }
 
+    protected nodeToCode(node: AstNode): string | undefined {
+        // Override for Python-specific boolean literals
+        if (node.type === NodeType.BooleanNode) {
+            return (node as BooleanNode).value ? 'True' : 'False';
+        }
+        
+        // For all other nodes, use the base implementation
+        return super.nodeToCode(node);
+    }
+
+    protected unaryOperatorNodeToCode(node: AstNode): string | undefined {
+        const operatorNode = node as UnaryOperationNode;
+
+        let operation: string | undefined;
+
+        switch (operatorNode.operation) {
+            case Operation.Not:
+                operation = 'not ';  // Note the space after 'not'
+                break;
+        }
+
+        if (operation && isAstNode(operatorNode.operand)) {
+            const operand = this.nodeToCode(operatorNode.operand);
+            return `${operation}${operand}`;
+        }
+
+        return undefined;
+    }
+
     protected operatorNodeToCode(node: AstNode): string | undefined {
         const operatorNode = node as BinaryOperationNode;
 
@@ -269,6 +353,12 @@ export class PythonCodeGenerator extends CodeGeneratorBase {
                 break;
             case Operation.Divide:
                 operation = '/';
+                break;
+            case Operation.And:
+                operation = 'and';
+                break;
+            case Operation.Or:
+                operation = 'or';
                 break;
         }
 
@@ -318,5 +408,14 @@ export class PythonCodeGenerator extends CodeGeneratorBase {
             returnType: 'void'
         };
         symbols.defineSymbol(logFloatSymbol);
+
+        const logBooleanSymbol: PlatformFunctionDefinition = { 
+            symbolType: SymbolType.PlatformFunction,
+            name: 'logB',
+            platformName: 'print',
+            parameterTypes: ['bool'],
+            returnType: 'void'
+        };
+        symbols.defineSymbol(logBooleanSymbol);
     }
 }

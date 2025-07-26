@@ -1,4 +1,4 @@
-import { AstNode, BinaryOperationNode, CallNode, isAstNode, NodeType } from "./parser";
+import { AstNode, BinaryOperationNode, BooleanNode, CallNode, isAstNode, NodeType, Operation, UnaryOperationNode } from "./parser";
 import { PlatformFunctionDefinition, SymbolTable, SymbolType } from "./symbols";
 
 type SemanticType = string | SemanticError;
@@ -17,14 +17,12 @@ export class SemanticModel {
     }
 
     public hasError(): boolean {
-        return this.nodeTypes
-            .values()
+        return Array.from(this.nodeTypes.values())
             .find(value => !isSemanticType(value)) !== undefined;
     }
 
     public errors(): ReadonlySet<SemanticError> {
-        return new Set(this.nodeTypes
-            .values()
+        return new Set(Array.from(this.nodeTypes.values())
             .filter(value => !isSemanticType(value)));
     }
 }
@@ -132,19 +130,52 @@ class SemanticModelVisitor extends AstVisitor<SemanticType> {
                 this.nodeTypes.set(expressionNode, 'f32');
                 return 'f32';
 
+            case NodeType.BooleanNode:
+                this.nodeTypes.set(expressionNode, 'bool');
+                return 'bool';
+
+            case NodeType.UnaryOperation:
+                const unaryOperationNode = expressionNode as UnaryOperationNode;
+                if (unaryOperationNode && isAstNode(unaryOperationNode.operand)) {
+                    const operandType = this.getExpressionType(unaryOperationNode.operand);
+                    
+                    // Only NOT operation is supported, and it requires a boolean operand
+                    if (unaryOperationNode.operation === Operation.Not) {
+                        if (operandType !== 'bool') {
+                            this.nodeTypes.set(expressionNode, SemanticError.IncompatibleOperands);
+                            return SemanticError.IncompatibleOperands;
+                        }
+                        
+                        this.nodeTypes.set(expressionNode, 'bool');
+                        return 'bool';
+                    }
+                }
+                break;
+
             case NodeType.BinaryOperation:
                 const binaryOperationNode = expressionNode as BinaryOperationNode;
                 if (binaryOperationNode && isAstNode(binaryOperationNode.left) && isAstNode(binaryOperationNode.right)) {
                     const left = this.getExpressionType(binaryOperationNode.left);
                     const right = this.getExpressionType(binaryOperationNode.right);
 
+                    // Boolean operations (And, Or) require both operands to be boolean
+                    if (binaryOperationNode.operation === Operation.And || binaryOperationNode.operation === Operation.Or) {
+                        if (left !== 'bool' || right !== 'bool') {
+                            this.nodeTypes.set(expressionNode, SemanticError.IncompatibleOperands);
+                            return SemanticError.IncompatibleOperands;
+                        }
+                        
+                        this.nodeTypes.set(expressionNode, 'bool');
+                        return 'bool';
+                    }
+                    
+                    // Arithmetic operations require same numeric types
                     if (left !== right) {
                         this.nodeTypes.set(expressionNode, SemanticError.IncompatibleOperands);
                         return SemanticError.IncompatibleOperands;
                     }
 
                     this.nodeTypes.set(expressionNode, left);
-
                     return left;
                 }
                 break;
